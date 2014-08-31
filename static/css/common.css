@@ -1,0 +1,32 @@
+ul, li{
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: inline-block;
+}
+
+.resizingContainer{
+  padding: 0px 60px;
+  width: 1160px;
+  margin: auto;
+}
+
+body{
+  background-color: #f2f4f6;
+}
+
+.dropdown-menu{
+  border-radius: 0px;
+}
+
+.pageContentsWrapper{
+}
+
+.pageContents{
+    min-height: 800px;
+    width: 1060px;
+    margin: auto;
+    margin-top: 40px;
+    background-color: white;
+  padding: 10px;
+}

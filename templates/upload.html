@@ -1,0 +1,31 @@
+{% extends "baseLayout.html" %}
+
+{% block css %}
+
+<link href="/static/css/common.css" rel="stylesheet">
+
+{% endblock %}
+
+{% block js %}
+
+{% endblock %}
+
+
+{% block body %}
+<div class="pageContentsWrapper">
+    <div class="pageContents">
+        <form action="" method=post class=add-entry>
+            <dl>
+                <h3>File:</h3>
+                <input type=file size=30 name=title>
+                <h3>Tags:</h3>
+                <input type=text name=text rows=5 cols=40></textarea>
+                <br>
+                <br>
+                <input type=submit value=Upload..>
+            </dl>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

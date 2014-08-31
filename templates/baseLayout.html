@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>SimplyWrong</title>
+
+        {% block css %}
+
+        {% endblock %}
+
+        <!-- header -->
+        <link href="/static/css/header.css" rel="stylesheet">
+        <!-- Bootstrap -->
+        <link href="/static/css/bootstrap.css" rel="stylesheet">
+
+        <!--TODO: insert a block here to allow scripts and css -->
+
+        <style type="text/css">
+            body{
+                background-color: #f2f4f6;
+            }
+        </style>
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+        <!-- jQuery-->
+        <script src="/static/js/jquery.min.js"></script>
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="/static/js/bootstrap.min.js"></script>
+        {% block js %}
+
+        {% endblock %}
+    </head>
+
+    <body>
+
+        <div class="headerWrapper">
+            <div class="header">
+                <span class="headerLogoWrapper">
+                    <a class="headerLogoLink" href="/">
+                        <img src="/static/img/logo_small.png" />
+                    </a>
+                </span>
+                <div class="headerInnerWrapper1" id="">
+                    <div class="headerTopArea">
+                        <span class="headerTopLinks">
+                            <ul class="headerTopLinksList">
+                                <li class="first"><a href="#">Popular </a></li>
+                                <li><a href="#">New     </a></li>
+                                <li><a href="#">Images  </a></li>
+                                <li><a href="#">Videos  </a></li>
+                                <li><a href="#">Blog    </a></li>
+                            </ul>
+                        </span>
+                        <div class="headerLoginAreaWrapper">
+                            <div class="headerLoginArea">
+                                <div class="signUp">
+                                    <a href='#'>Sign Up</a>
+                                </div>
+                                <div class="login">
+                                    <a href='#'>Login</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="headerBottomArea clearfix">
+                        <div class="headerSearchArea">
+                            <form action="/s">
+                                <div class="input-group">
+                                    <input type="text" name="q" class="form-control searchBarInput" placeholder="">
+                                    <div class="input-group-btn">
+                                        <button type="submit" class="btn btn-default searchSubmitButton" tabindex="-1"><span class="glyphicon glyphicon-search searchGlypeIcon"></span></button>
+                                    </div><!-- /btn-group -->
+                                </div><!-- /input-group -->
+                            </form>
+                        </div>
+                        <!--
+                        <span class="glyphiconContainer">
+                            <span class="glyphicon glyphicon-picture"></span>
+                            <span class="glyphicon glyphicon-facetime-video"></span>
+                        </span>
+-->
+                        <div class="headerUploadArea"><a href="/upload" class="btn btn-default">Upload</a></div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /.headerWrapper -->
+
+
+        <!--TODO: add a block here for the page contents-->
+
+
+        {% block body %}{% endblock %}
+
+
+        <div class="footerWrapper">
+            <div class="footer">
+
+
+
+            </div>
+        </div>
+    </body>
+</html>

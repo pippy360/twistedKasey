@@ -1,0 +1,86 @@
+{"images":[
+	{
+		"url":"img/videoThumb1.png",
+		"width":100,
+		"height":200,
+		"type":"image"
+
+		},
+	{
+		"url":"img/16_9.png",
+		"width":100,
+		"height":200,
+		"type":"video"
+
+		},
+	{
+		"url":"img/long1.png",
+		"width":100,
+		"height":200,
+		"type":"image"
+
+		},
+	{
+		"url":"img/long2.png",
+		"width":100,
+		"height":200,
+		"type":"video"
+
+		},
+	{
+		"url":"img/thumb2.png",
+		"width":100,
+		"height":200,
+		"type":"image"
+
+		},
+	{
+		"url":"img/2.jpg",
+		"width":100,
+		"height":200,
+		"type":"video"
+
+		},
+	{
+		"url":"img/3.jpg",
+		"width":100,
+		"height":200,
+		"type":"image"
+
+		},
+	{
+		"url":"img/4.jpg",
+		"width":100,
+		"height":200,
+		"type":"video"
+
+		},
+	{
+		"url":"img/5.jpg",
+		"width":100,
+		"height":200,
+		"type":"image"
+
+		},
+	{
+		"url":"img/6.jpg",
+		"width":100,
+		"height":200,
+		"type":"image"
+
+		},
+	{
+		"url":"img/7.jpg",
+		"width":100,
+		"height":200,
+		"type":"image"
+
+		},
+	{
+		"url":"img/thumb1.png",
+		"width":100,
+		"height":200,
+		"type":"image"
+
+	}
+]}
