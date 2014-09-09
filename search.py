@@ -4,16 +4,16 @@ import json
 
 def getSearchResultsWithQuery( query ):
   keywordsList = getKeywordsFromQuery( query )
-  mathingImages = getMatchingImagesList( keywordsList )
-  sortedImageIdList = getListSortedByRelevance( mathingImages )
+  mathingFiles = getMatchingFilesList( keywordsList )
+  sortedImageIdList = getListSortedByRelevance( mathingFiles )
   return json.dumps( sortedImageIdList )
 
   #return sortedImageIdList
 
 
 #TODO: give a better name
-def jsonEncode( imageIdList ):
-  return imageIdList
+def jsonEncode( fileIdList ):
+  return fileIdList
 
 
 def getKeywordsFromQuery( query ):
@@ -21,29 +21,29 @@ def getKeywordsFromQuery( query ):
 
   return query.split()
 
-def getMatchingImagesList( keywordsList ):
+def getMatchingFilesList( keywordsList ):
   result = []
   for keyword in keywordsList:
 
-    matchingImages = keywordDatabase.getMatchingImages( keyword )
-    result.append( (keyword, matchingImages) )
+    matchingFiles = keywordDatabase.getMatchingFiles( keyword )
+    result.append( (keyword, matchingFiles) )
 
   return result
 
 
 #TODO: explain what it returns
-def getListSortedByRelevance( keywordsWithImages ):
+def getListSortedByRelevance( keywordsWithFiles ):
   result = []
-  for imageIdTuple in keywordsWithImages:
+  for fileIdTuple in keywordsWithFiles:
 
-    imageIdList = imageIdTuple[1]
-    for imageId in imageIdList:
+    fileIdList = fileIdTuple[1]
+    for fileId in fileIdList:
 
-      pos = getPosOfKeyInResult( imageId, result )
+      pos = getPosOfKeyInResult( fileId, result )
       if pos != -1:
-        result[ pos ] = ( imageId, result[pos][1] + 1 )#increments immutable value of result[pos][1]
+        result[ pos ] = ( fileId, result[pos][1] + 1 )#increments immutable value of result[pos][1]
       else:
-        result.append( ( imageId, 1 ) )
+        result.append( ( fileId, 1 ) )
 
   return sorted(result, key=lambda tup: tup[1], reverse=True)
 

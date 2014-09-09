@@ -1,7 +1,8 @@
 #import urlHandler
 import search
+#import thumbnailGenerator
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 app = Flask(__name__)
 
 
@@ -40,6 +41,11 @@ def showSearchWithUrlQuery(query):
   searchResults = search.getSearchResultsWithQuery( query = query )
   print searchResults
   return render_template( "search.html", searchResults = searchResults )
+
+
+@app.route("/thumb")
+def handleThumbnailRequest():
+  return send_file('./static/img/1.png', mimetype='image/gif')
 
 
 if __name__ == "__main__":
