@@ -14,16 +14,18 @@
 {% block body %}
 <div class="pageContentsWrapper">
     <div class="pageContents">
-        <form action="" method=post class=add-entry>
-            <dl>
-                <h3>File:</h3>
-                <input type=file size=30 name=title>
-                <h3>Tags:</h3>
-                <input type=text name=text rows=5 cols=40></textarea>
-                <br>
-                <br>
-                <input type=submit value=Upload..>
-            </dl>
+        <form action="/file" method=post class=add-entry enctype=multipart/form-data>
+            <h3>File:</h3>
+            <input type=file name=photo>
+            <h3>Tags:</h3>
+            <input type=text name=tags rows=5 cols=40 />
+            <h3>title:</h3>
+            <input type=text name=title />
+            <h3>description:</h3>
+            <input type=text name=description rows=5 cols=40 />
+            <br>
+            <br>
+            <input type=submit value=Upload..>
         </form>
     </div>
 </div>

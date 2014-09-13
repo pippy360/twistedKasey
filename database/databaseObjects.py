@@ -3,196 +3,161 @@ import objectInfoDatabase
 import databaseFunctions
 
 acceptedFileTypes = ['image','video','sound']#TODO: MOVE THIS TO A CONFIG
-
-#serialize returns strings and lists
+databaseIdPrefix = '_databaseId'
+objectTypePrefix = '_objectType'
+dataPrefix = '_data_'
 
 #TODO: explain
 class StorableObject( object ):
 
-  databaseId = ''#used to access database
+  simpleInstantVarsPrefix = 'info'
+
+  @classmethod
+  def getClassId( cls ):
+    return cls.__name__
+
+  def __init__( self, databaseId ):
+    if databaseId == None:
+      databaseId = databaseFunctions.getNewDatabaseId()
+
+  def createSerializeObj( self, data ):
+    return databaseFunctions.createSerializeObj( data, self.databaseId, self.__class__.getClassId() )
 
   def save( self ):
     data = self.serialize()
-    databaseFunctions.storeSerializedObject( self.databaseId, data )
+    databaseFunctions.storeSerializedObjects( data )
 
   def load( self ):
-    skeleton = self.serialize()
-    data = databaseFunctions.getSerializedObject( self.databaseId, skeleton )
-    self.updateData( data )
+    serializedObj = databaseFunctions.getSerializedObject( self.databaseId )
+    self.deserialize( serializedObj )
 
-  #TODO: EXPLAIN
-  #TODO: turn it into a get skeleton function
   def serialize( self ):
-    return {}
+    return self.createSerializeObj( {} )
 
-  def updateData( self, fileData ):
-    for key, val in fileData.iteritems():
-      if isinstance( val, (int, long, float, complex, basestring) ):
+  def deserialize( self, serializedObj ):
+    for key, val in serializedObj[ dataPrefix ][ self.simpleInstantVarsPrefix ].iteritems():
+      if isinstance( val, (int, long, float, complex, basestring, list) ):
         setattr( self, key, val )
-      elif type( val ) is list:
-        setattr( self, key, val )
-      elif type( val ) is dict:
-        for k,v in val.iteritems():
-          setattr( self, k, v )
       else:
-        print "ERROR"#TODO: learn erro
+        print "ERROR: bad var type"#TODO: learn errors
+
+
+class SearchableObject( StorableObject ):
+  #TODO: add file function, make sure it doesn't let two files with the same databaseId
+  fileIdsPrefix = 'fileIds'
+
+  def __init__( self, databaseId=None, fileType = '', title = '', description = '',
+               metadata = '', relatedFileIds = '', uploadInfo = '' ):
+    self.files = []
+    if databaseId == None:
+      databaseId = databaseFunctions.getNewDatabaseId()
+
+    self.databaseId = databaseId
+
+    self.fileType       = fileType
+    self.title          = title
+    self.description    = description
+    self.metadata       = metadata
+    self.relatedFileIds = relatedFileIds
+    self.uploadInfo     = uploadInfo
+
+  def addNewFile( self, databaseId, objType ):
+    for f in self.files:
+      if f.databaseId == databaseId:
+        print "ERROR: file with id exists"
+        return
+
+    self.files.append( databaseFunctions.createNewFile( databaseId, objType  ) )
+
+  def save( self ):
+    for f in self.files:
+      f.save()
+
+    databaseFunctions.storeSerializedObjects( self.simpleSerialize() )
+
+  def load( self ):
+    self.files = []
+    fileIds = []
+    serializedObj = databaseFunctions.getSerializedObject( self.databaseId )
+    data = serializedObj[ dataPrefix ]
+    fileIds = serializedObj[ dataPrefix ].get( self.fileIdsPrefix, [] )
+    for fileId in fileIds:
+      f = databaseFunctions.getFile( fileId )
+      self.files.append( f )
 
   #TODO: explain
-  def deserialize( self, skeletonSerializedDict ):#TODO: replace fileID with self.id
-    self.updateData( skeletonSerializedDict )
-
-  def __init__( self, databaseId ):
-    self.databaseId = databaseId
-
-
-class SearchableFile( StorableObject ):
-
-  files = []
-  title = ''
-  description = ''
-  metadata = ''
-  fileType = ''#video, sound, image
-  tags = []
-  relatedFileIds = ''
-  uploadInfo = []
-
-  def __init__( self, databaseId, fileType=None ):
-    self.databaseId = databaseId
-    self.fileType = fileType
-    if not fileType in acceptedFileTypes:
-      print "ERROR"#TODO: learn how to handle errors
-
-
-  def createNewFile( self, databaseId, fileType=None ):
-    if fileType is None: fileType = self.fileType
-    if not fileType in acceptedFileTypes: print "ERROR"
-
-    if fileType == 'image':
-      return ImageFile( databaseId )
-    elif fileType == 'video':
-      return VideoFile( databaseId )
-    elif fileType == 'sound':
-      return SoundFile( databaseId )
-
-
-  def addFile( self, databaseId, fileType=None, fileData={} ):
-    if fileType is None: fileType = self.fileType
-    newFile = getNewFile()
-    files.append( )
-
-  #TODO: fileIds shouldn't be hardcoded
-  def saveRelatedFiles( self ):
+  #this serializes just the easy to serialize variables, it ignores stuff like self.files
+  def simpleSerialize( self ):
+    info = {
+          'fileType':       self.fileType,
+          'title':          self.title,
+          'description':    self.description,
+          'metadata':       self.metadata,
+          'relatedFileIds': self.relatedFileIds,
+          'uploadInfo':     self.uploadInfo,
+      }
     fileIds = []
-    for currfile in self.files:
-      currfile.save()
-      fileIds.append( currfile.databaseId )
+    for f in self.files:
+      fileIds.append( f.databaseId )
 
-    serializedObj = { "fileIds": fileIds }
-    databaseFunctions.storeSerializedObject( self.databaseId, serializedObj )
-
-
-  def loadRelatedFiles( self ):
-    files = []
-    serializedObj = { "fileIds": [] }
-    serializedObj = databaseFunctions.getSerializedObject( self.databaseId, serializedObj )
-    print serializedObj
-    for fileDatabaseId in serializedObj['fileIds']:
-      newFile = self.createNewFile( fileDatabaseId )
-      self.files.append( newFile )
-
-    for currfile in self.files:
-      currfile.load()
-
+    return self.createSerializeObj( {
+          self.simpleInstantVarsPrefix : info,
+          self.fileIdsPrefix: fileIds
+      } )
 
   def serialize( self ):
-    return {
-      'data': {
-        'title': self.title,
-        'description': self.description,
-        'metadata': self.metadata,
-        'fileType': self.fileType,
-        'relatedFileIds': self.relatedFileIds,
-        'uploadInfo': self.uploadInfo
-      },
-      'tags': self.tags
-    }
+    result  = []
+    for f in self.files:
+      result.append( f.serialize() )
+
+    result.append( self.simpleSerialize() )
+
+    return result
 
 
 class uploadInfo( StorableObject ):
+  pass
 
-  ip = ''
-  time = ''
-  fileId = ''
 
 class BasicFile( StorableObject ):
 
-  databaseFilePrefix = 'file_'
-  originalFile = ''#TODO: explain
-  fileHash = ''
-  filename = ''
-  fileLocation = ''
-  extension = ''
-  mimetype = ''
-  fileMetadata = ''
+  #TODO: something about the init
+  def __init__( self, databaseId=None, originalFile = '', fileHash = '', filename = '',
+               fileLocation = '', extension = '', mimetype = '', fileMetadata = ''):
+    if databaseId == None:
+      databaseId = databaseFunctions.getNewDatabaseId()
 
-  def __init__( self, databaseId, fileData={} ):
-    self.databaseId = databaseId
-    self.updateData( fileData )
+
+    self.originalFile = originalFile
+    self.fileHash     = fileHash
+    self.filename     = filename
+    self.fileLocation = fileLocation
+    self.extension    = extension
+    self.mimetype     = mimetype
+    self.fileMetadata = fileMetadata
 
   def serializeBasicFile( self ):
     return {
       'originalFile': self.originalFile,
-      'fileHash': self.fileHash,
-      'filename': self.filename,
+      'fileHash':     self.fileHash,
+      'filename':     self.filename,
       'fileLocation': self.fileLocation,
-      'extension': self.extension,
-      'mimetype': self.mimetype,
+      'extension':    self.extension,
+      'mimetype':     self.mimetype,
       'fileMetadata': self.fileMetadata
     }
 
   def serialize( self ):
-    return {
-      'info': self.serializeBasicFile()
-    }
+    return self.createSerializeObj( { self.simpleInstantVarsPrefix: self.serializeBasicFile() } )
 
 
 class ImageFile( BasicFile ):
-
-  width = ''
-
-  def serialize( self ):
-    result = self.serializeBasicFile()
-    result.update({
-      'width': self.width,
-    })
-    return {
-      'info': result
-    }
+  pass
 
 
 class VideoFile( BasicFile ):
-
-  width = ''
-
-  def serialize( self ):
-    result = self.serializeBasicFile()
-    result.update({
-      'width': self.width,
-    })
-    return {
-      'info': result
-    }
+  pass
 
 
 class SoundFile( BasicFile ):
-
-  length = -1
-
-  def serialize( self ):
-    result = self.serializeBasicFile()
-    result.update({
-      'length': self.length,
-    })
-    return {
-      'info': result
-    }
+  pass

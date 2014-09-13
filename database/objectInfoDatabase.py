@@ -1,56 +1,66 @@
-#TODO: this code doesn't work at all if the layout of FileInfo class changes while the database already has files in it
-#TODO: RENAME AS FILEINFODATABASE
+#there's a problem here with that databaseId, should we be using a databaseId ? nope
 import redis
-import databaseObjects
-import copy
 
 #only this module should know about this key prefix
-keyStringPrefix = '_objectInfo_'
-keyFormat = '{0}{1}_{2}'#TODO: explain this
+keyStringPrefix = 'o'
+keyFormat = '{0}_{1}'
 
-objectInfoRedisDB = redis.StrictRedis( '127.0.0.1', 6379 )
+objectInfoRedisDB = redis.StrictRedis( '127.0.0.1', 6379 )#TODO: move to config file
 
-
-#this is sort of overComplicated
-def storeSerializedObject( databaseId, serializedDict ):
-  for k, value in serializedDict.iteritems():
-    key = keyFormat.format( keyStringPrefix, k, databaseId )
-
-    if isinstance( value, (int, long, float, complex, basestring) ):
-      objectInfoRedisDB.set( key, value )#set proper names
-    elif type( value ) is list:
-      objectInfoRedisDB.delete( key )#clear list
-      for e in value:
-        objectInfoRedisDB.lpush( key, e )
-    elif type( value ) is dict:
-      objectInfoRedisDB.hmset( key, value )
-    else:
-      print "ERROR"#TODO: learn errors
-
-
-def removeSerializedObject( fileId ):
+def getObjectType( databaseId ):
   pass
 
+def setMutli( serializedObj ):
+  for k, val in serializedObj.iteritems():
+    key = keyFormat.format( keyStringPrefix, k )
+    _setVal( key, val )
 
-def getSerializedObject( databaseId, skeletonSerializedDict ):
+def setVal( k, v ):
+  key = keyFormat.format( keyStringPrefix, k )
+  return _setVal( key, v )
 
-  s = copy.deepcopy( skeletonSerializedDict )
-  #FIXME: kind of dirty fix here because i want to go to bed
-  for k, value in skeletonSerializedDict.iteritems():
-    key = keyFormat.format( keyStringPrefix, k, databaseId )
+def _setVal( key, val ):
+  if isinstance( val, (int, long, float, complex, basestring) ):
+    objectInfoRedisDB.set( key, val )#set proper names
+  elif type( val ) is list:
+    objectInfoRedisDB.delete( key )#clear list
+    for e in val:
+      objectInfoRedisDB.lpush( key, e )
+  elif type( val ) is dict:
+    objectInfoRedisDB.hmset( key, val )
+  else:
+    print "ERROR bad set"#TODO: learn errors
 
-    if isinstance( value, (int, long, float, complex, basestring) ):
-      s[k] = objectInfoRedisDB.get( key )#set proper names
-    elif type( value ) is list:
-      s[k] = objectInfoRedisDB.lrange( key, 0, -1 )
-    elif type( value ) is dict:
-      s[k] = objectInfoRedisDB.hgetall( key )
+#def getMulti( keys ):
+#  pass
+
+#TODO: comment
+def getMultiWithStub( keyStub, removeStub=True ):#TODO: rename this to what it actually does
+  result = {}
+  k = keyFormat.format( keyStringPrefix, keyStub )
+  for key in objectInfoRedisDB.keys( k+'*' ):
+    if removeStub:
+      resultKey = key.replace( k, '' )
     else:
-      print "ERROR"#TODO: learn errors
+      resultKey = key.replace( keyStringPrefix, '' )
+    result.update( { key.replace( k, '' ) : _getVal( key ) } )
 
-  return s
+  return result
 
+def getVal( k ):
+  key = keyFormat.format( keyStringPrefix, k )
+  return _getVal( key )
 
-def getBasicFile():
+def _getVal( key ):
+  redisType = objectInfoRedisDB.type( key )
+  if redisType == 'string':
+    return objectInfoRedisDB.get( key )
+  elif redisType == 'list':
+    return objectInfoRedisDB.lrange( key, 0, -1 )
+  elif redisType == 'hash':
+    return objectInfoRedisDB.hgetall( key )
+  else:
+    print "ERROR bad get"#TODO: learn errors
+
+def getObject( databaseId ):
   pass
-

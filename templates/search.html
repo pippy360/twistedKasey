@@ -18,8 +18,8 @@ $( document ).ready( function (){
     var images = JSON.parse( results );
     $('.pageContents').html('')
     for( var i = 0; i < images.length; i++ ){
-        console.log( images[i][0] );
-        $('.pageContents').append('<img class="imgFixWidth" src="/static/storage/'+ images[i][0] +'" />')
+        console.log( images[i] );
+        //$('.pageContents').append('<img class="imgFixWidth" src="/static/storage/'+ images[i][0] +'" />')
     }
 })
 </script>

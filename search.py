@@ -1,12 +1,23 @@
-import keywordDatabase
+from database import databaseFunctions
 import json
 
 
 def getSearchResultsWithQuery( query ):
   keywordsList = getKeywordsFromQuery( query )
   mathingFiles = getMatchingFilesList( keywordsList )
+  print 'matchingFiles'
+  print mathingFiles
   sortedImageIdList = getListSortedByRelevance( mathingFiles )
-  return json.dumps( sortedImageIdList )
+
+  result = []
+  for imageId in sortedImageIdList:
+    obj = databaseFunctions.getObjectInfo( imageId[0], 'image' )
+    result.append( obj.serialize() )
+    print imageId
+
+  print result
+
+  return json.dumps( result )
 
   #return sortedImageIdList
 
@@ -24,11 +35,14 @@ def getKeywordsFromQuery( query ):
 def getMatchingFilesList( keywordsList ):
   result = []
   for keyword in keywordsList:
-
-    matchingFiles = keywordDatabase.getMatchingFiles( keyword )
+    matchingFiles = databaseFunctions.getMatchingFiles( keyword )
     result.append( (keyword, matchingFiles) )
 
   return result
+
+
+def getIntersection( keywords ):
+  databaseFunctions.getIntersection( keywords )
 
 
 #TODO: explain what it returns

@@ -2,7 +2,7 @@
 import redis
 
 #only this module should know about this keyword prefix
-keyStringPrefix = '_keyword_'
+keyStringPrefix = 'k_'
 keyFormat = '{0}{1}'# '_keyword_' + the tag
 
 keywordRedisDB = redis.StrictRedis( '127.0.0.1', 6379 )
@@ -14,13 +14,15 @@ def addTags( fileId, tagsList ):
     tagsList = [ tagsList ]
 
   for tag in tagsList:
-    keywordRedisDB.sadd( keyword.format( keyFormat, tag ), fileId )
+    keywordRedisDB.sadd( keyFormat.format( keyStringPrefix, tag ), fileId )
 
+def getIntersection( keywords ):
+  return keywordRedisDB.sinter( keywords )
 
 def removeFileIdFromTag( fileId, tag ):
   #TODO: what happens if it doesn't exist ??
-  keywordRedisDB.srem( keyword.format( keyFormat, tag ), fileId )
+  keywordRedisDB.srem( keyFormat.format( keyStringPrefix, tag ), fileId )
 
 
 def getMatchingFiles( keyword ):
-  return keywordRedisDB.smembers( keyword.format( keyFormat, keyword ) )
+  return keywordRedisDB.smembers( keyFormat.format( keyStringPrefix, keyword ) )

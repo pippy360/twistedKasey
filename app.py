@@ -1,5 +1,6 @@
 #import urlHandler
 import search
+import filesAPI
 #import thumbnailGenerator
 
 from flask import Flask, render_template, request, send_file
@@ -19,6 +20,10 @@ def showIndex():
 def showUpload():
   return render_template("upload.html")
 
+@app.route("/file", methods=['GET', 'POST'])
+def file():
+  filesAPI.uploadFileFromForm( request )
+  return render_template("home.html")
 
 @app.route("/s")
 @app.route("/s/")
@@ -49,4 +54,5 @@ def handleThumbnailRequest():
 
 
 if __name__ == "__main__":
-    app.run()
+  app.debug = True
+  app.run()
