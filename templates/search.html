@@ -4,7 +4,8 @@
 <link href="/static/css/common.css" rel="stylesheet">
 <style>
 .imgFixWidth{
-    width: 250px;
+    max-width: 250px;
+    max-height:250px;
 }
 </style>
 {% endblock %}
@@ -14,12 +15,22 @@
 
 //TODO: this is very hacky
 $( document ).ready( function (){
-    var results = '{{ searchResults|safe }}';
-    var images = JSON.parse( results );
-    $('.pageContents').html('')
-    for( var i = 0; i < images.length; i++ ){
-        console.log( images[i] );
-        //$('.pageContents').append('<img class="imgFixWidth" src="/static/storage/'+ images[i][0] +'" />')
+    var results = {{ searchResults|safe }};
+
+    console.log( results )
+    for( var i = 0; i < results.length; i++ ){
+        console.log( results[i] )
+        for( var j = 0; j < results[i].length; j++ ){
+            console.log( results[i][j] )
+            if( results[i][j]._objectType != 'SearchableObject' ){
+                var url = results[i][j]._data_info.fileLocation + results[i][j]._data_info.filename
+                console.log( "here" + url)
+                $('.pageContents').append("<img class='imgFixWidth' src='"+url+"' />")
+                break;
+            }else{
+                console.log( "here" + results[i][j]._objectType )
+            }
+        }
     }
 })
 </script>

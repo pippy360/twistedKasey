@@ -1,129 +1,110 @@
 import time
 import random
-from database import databaseFunctions, databaseObjects
+import base64
+import hashlib
+import os
+from database   import databaseFunctions, databaseObjects
+from processing import detect
 #TODO: clients way of uploading, removing, editing files and the files data
 
 filesLocation = './static/storage/'
 
-def uploadFileFromUrl( request ):
-  #FIXME: not implemented
-  #attempt to get the URL
-  #then upload File
-  pass
+#FIXME: the current implementation allows tags to be added only after the file has finished uploading
+def hanldeUploadFormSubmit( request ):
+  working = []
+  for k, f in request.files.iteritems():
+    returnData = storeFile( f )
+    tags = request.form['tags'].split()
+    if tags:
+      databaseFunctions.addTags( returnData['databaseId'], tags )#FIXME: THIS IS SO FUCKING HACKY
+    working.append( returnData['fileLocation'] )
 
-def getId():
-  return databaseFunctions.getNewDatabaseId()
+  #tags should be a dict #!! so that multiple tags can be added to multiple images
+  #databaseFunctions.addTags(  )
 
-def uploadFileFromForm( request ):
+  #databaseFunctions.updateData(  )
+  return working
 
-  fileInfo   = getFileInfo( f )#TODO: ERROR checking
+#TODO: this should really be moved to the databaseFunctions, encase the layout of databases changes
+def storeFile( f, originalFilename='' ):
 
-  uploadInfo = getUploadInfo( request )
+  fileInfo = getFileInfo( f )
 
-  formData   = getFormData( request )
+  #FIXME: the paths here are badly done
+  filePath = './static/storage/'
+  sitePath = '/static/storage/'
+  fileInfo['fileLocation'] = sitePath
 
-  #check if the hash is already there, if it is just add the upload info and form data
-  #else if
-  #get a databaseId and add the data
+  status = isValidFile( fileInfo )
+  if status != 0:
+    return status
+
+  #check if the file already exists
+  existingFileIdDict = databaseFunctions.getFileIdWithHash( fileInfo['hash'] )
+  print 'Hash:'
+  print fileInfo['hash']
+
+  if existingFileIdDict != None:
+    print 'existing file'
+    #call special update function
+    existingFileInfo = databaseFunctions.getFileInfo( existingFileIdDict['fileId'] )
+    return {
+      'databaseId': existingFileIdDict['searchableId'],
+      'fileLocation': existingFileInfo['filename']
+    }
+  else:
+    #FIXME: ALL THIS IS SO FUCKING MESSY
+    print 'new File'
+    #TODO: write the return information and decide on a standard way of doing it
+    fileIds = databaseFunctions.addFileToDatabase( fileInfo )
+    f.seek( 0 )
+    f.save( filePath + fileInfo['filename'] )
+    return {
+      'databaseId': fileIds['databaseId'],
+      'fileLocation': fileIds['fileLocation']
+    }
 
 
-#this function handles a every uploaded file once it is finished uploading
-#whether it's from a URL or POST or anything else
-def hanldeUploadedFile( fileOnServer, postData ):
-  pass
+def getFileInfo( f ):
+  #FIXME:
+  tempPath = './static/storage/'
+  f.save( tempPath+f.filename )
+  result = detect.detect( tempPath+f.filename )
 
+  result['size'] = 100000
 
-def isValidFile():
-  #check size
-  #check format
-  pass
+  result['hash'] = getBeautifulHash( f )
 
+  #get extension, just get it from the filename ATM
+  fileName, fileExtension = os.path.splitext( f.filename )
+  result['extension'] = fileExtension
 
-def addFileToDatabases():
-  pass
+  result['filename'] = result['hash'] + result['extension']
 
+  #then just the file type specific stuff
+  #put type specific stuff into functions
+  return result
+
+def getBeautifulHash( f ):
+  tempHash = get_hash( f )
+  return to_id( tempHash )
+
+def get_hash(f):
+  f.seek(0)
+  return hashlib.md5(f.read()).digest()
+
+def isValidFile( fileInfo ):
+  #FIXME:
+  if fileInfo['size'] > 1000:
+    return False
+  elif not fileInfo['type'] in ['image']:
+    return False
+  else:
+    return True
 
 def getNewFileId():
   #the number of the file uploaded,
   #TODO: make the file ID system easy enough that people can write down the values manually
   pass
 
-
-
-'''TODO: remove
-  #at the point the file is saved on the server
-  #process it, this should be done in the background
-
-  #if not isValidFile( 'the file' ):
-  #  return 'some error'
-
-  fileId = ''
-  size = ''
-  originalFileName = ''
-  fileId + ext = ''
-  mimetype = ''
-  userIp = ''
-  title = ''
-  description = ''
-  fileMetadata = ''
-  fileTags = ''
-
-  #get the size
-  #get the orginal filename #this might need some clean up if it came from a url
-  #set the filename
-  #get the mimetype
-  #get the IP
-  #get the title/desc
-  #get the metadata
-  #get the tags
-  fileInfo = {}
-  fileInfo['fileId']           = fileId
-  fileInfo['originalSize']     = size
-  fileInfo['originalFileName'] = originalFileName
-  fileInfo['filename']         = fileId + ext
-  fileInfo['mimetype']         = mimetype
-  fileInfo['uploadDate']       = getUnixTime()
-  fileInfo['ip']               = userIp
-  fileInfo['title']            = title
-  fileInfo['description']      = description
-  fileInfo['metadata']         = fileMetadata
-  fileInfo['convertedFiles']   = []
-  fileInfo['tags']             = fileTags
-
-
-  #get the file Id after making sure it's a valid file, that way we don't waste generated file ids
-  '''
-
-#  form = request.form
-#  files = request.files
-
-#  file = files['photo']
-#  location = './static/storage/'#TODO: make this a fixed path so no problem with starting python like ./twistedKasey
-#  file.save( location+file.filename )
-#  tags = form['tags'].split()
-#  title = form['title']
-#  description = form['description']
-
-#  databaseId = getId()
-#  databaseFunctions.addTags( databaseId, tags )
-
-#  print "search id : " + databaseId
-
-#  search = databaseObjects.SearchableFile( databaseId )
-#  print 'testing the class:'
-#  print databaseObjects.SearchableFile.files
-
-#  search.title = title
-#  search.description = description
-#  search.tags = tags
-#  databaseId = getId()
-#  print "file id : " + databaseId
-
-#  newFile = databaseObjects.ImageFile( databaseId )
-#  newFile.fileLocation = location
-#  newFile.filename = file.filename
-
-#  print search.files
-#  search.files.append( newFile )
-#  search.save()
-#  search.saveRelatedFiles()
+to_id = lambda h: base64.b64encode(h)[:12].replace('/', '_').replace('+', '-')

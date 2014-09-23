@@ -1,6 +1,7 @@
 #import urlHandler
 import search
 import filesAPI
+import urlHandler
 #import thumbnailGenerator
 
 from flask import Flask, render_template, request, send_file
@@ -22,8 +23,8 @@ def showUpload():
 
 @app.route("/file", methods=['GET', 'POST'])
 def file():
-  filesAPI.uploadFileFromForm( request )
-  return render_template("home.html")
+  uploadResults = filesAPI.hanldeUploadFormSubmit( request )
+  return render_template("uploadResult.html", uploadResults=uploadResults)
 
 @app.route("/s")
 @app.route("/s/")
@@ -31,10 +32,8 @@ def showSearchWithGetQuery():
   #TODO: this 'q' shouldn't be hardcoded
   query = request.args.get('q')
   if( query == None ):
-    print "here1"
     return render_template("search.html", searchResults = 'test' )
   else:
-    print "here2"
     searchResults = search.getSearchResultsWithQuery( query = query )
     print searchResults
     return render_template( "search.html", searchResults = searchResults )

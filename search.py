@@ -4,18 +4,15 @@ import json
 
 def getSearchResultsWithQuery( query ):
   keywordsList = getKeywordsFromQuery( query )
-  mathingFiles = getMatchingFilesList( keywordsList )
-  print 'matchingFiles'
-  print mathingFiles
-  sortedImageIdList = getListSortedByRelevance( mathingFiles )
+  sortedImageIdList = databaseFunctions.getIntersection( keywordsList )
 
   result = []
+  print sortedImageIdList
   for imageId in sortedImageIdList:
-    obj = databaseFunctions.getObjectInfo( imageId[0], 'image' )
-    result.append( obj.serialize() )
+    print 'image id : '
     print imageId
-
-  print result
+    objData = databaseFunctions.getObjectInfo( imageId[0] )
+    result.append( objData )
 
   return json.dumps( result )
 
@@ -39,11 +36,6 @@ def getMatchingFilesList( keywordsList ):
     result.append( (keyword, matchingFiles) )
 
   return result
-
-
-def getIntersection( keywords ):
-  databaseFunctions.getIntersection( keywords )
-
 
 #TODO: explain what it returns
 def getListSortedByRelevance( keywordsWithFiles ):

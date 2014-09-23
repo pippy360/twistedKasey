@@ -36,8 +36,10 @@ def _setVal( key, val ):
 
 #TODO: comment
 def getMultiWithStub( keyStub, removeStub=True ):#TODO: rename this to what it actually does
+  #FIXME: THERE IS AN ERROR HERE IF THE ID IS 2 NUMBERS LIKE 22 will be returned, fix ? maybe get with stub is a bad idea
   result = {}
   k = keyFormat.format( keyStringPrefix, keyStub )
+  print objectInfoRedisDB.keys( k+'*' )
   for key in objectInfoRedisDB.keys( k+'*' ):
     if removeStub:
       resultKey = key.replace( k, '' )
@@ -60,7 +62,7 @@ def _getVal( key ):
   elif redisType == 'hash':
     return objectInfoRedisDB.hgetall( key )
   else:
-    print "ERROR bad get"#TODO: learn errors
+    return None
 
 def getObject( databaseId ):
   pass

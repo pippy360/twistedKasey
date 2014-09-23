@@ -29,6 +29,7 @@ class StorableObject( object ):
 
   def load( self ):
     serializedObj = databaseFunctions.getSerializedObject( self.databaseId )
+    print serializedObj
     self.deserialize( serializedObj )
 
   def serialize( self ):
@@ -46,14 +47,11 @@ class SearchableObject( StorableObject ):
   #TODO: add file function, make sure it doesn't let two files with the same databaseId
   fileIdsPrefix = 'fileIds'
 
-  def __init__( self, databaseId=None, fileType = '', title = '', description = '',
+  def __init__( self, databaseId, fileType = '', title = '', description = '',
                metadata = '', relatedFileIds = '', uploadInfo = '' ):
     self.files = []
-    if databaseId == None:
-      databaseId = databaseFunctions.getNewDatabaseId()
 
-    self.databaseId = databaseId
-
+    self.databaseId     = databaseId
     self.fileType       = fileType
     self.title          = title
     self.description    = description
@@ -61,13 +59,13 @@ class SearchableObject( StorableObject ):
     self.relatedFileIds = relatedFileIds
     self.uploadInfo     = uploadInfo
 
-  def addNewFile( self, databaseId, objType ):
+  def addNewFile( self, databaseId=None, fileInfo={} ):
     for f in self.files:
       if f.databaseId == databaseId:
         print "ERROR: file with id exists"
         return
 
-    self.files.append( databaseFunctions.createNewFile( databaseId, objType  ) )
+    self.files.append( databaseFunctions.createNewFile( databaseId, fileInfo ) )
 
   def save( self ):
     for f in self.files:
@@ -122,19 +120,18 @@ class uploadInfo( StorableObject ):
 class BasicFile( StorableObject ):
 
   #TODO: something about the init
-  def __init__( self, databaseId=None, originalFile = '', fileHash = '', filename = '',
-               fileLocation = '', extension = '', mimetype = '', fileMetadata = ''):
+  def __init__( self, databaseId=None, fileData={}):
     if databaseId == None:
       databaseId = databaseFunctions.getNewDatabaseId()
 
-
-    self.originalFile = originalFile
-    self.fileHash     = fileHash
-    self.filename     = filename
-    self.fileLocation = fileLocation
-    self.extension    = extension
-    self.mimetype     = mimetype
-    self.fileMetadata = fileMetadata
+    self.databaseId   = databaseId
+    self.originalFile = fileData.get( 'originalFile' )
+    self.fileHash     = fileData.get( 'fileHash' )
+    self.filename     = fileData.get( 'filename' )
+    self.fileLocation = fileData.get( 'fileLocation' )
+    self.extension    = fileData.get( 'extension' )
+    self.mimetype     = fileData.get( 'mimetype' )
+    self.fileMetadata = fileData.get( 'metadata' )
 
   def serializeBasicFile( self ):
     return {

@@ -1,0 +1,21 @@
+{% extends "baseLayout.html" %}
+
+{% block css %}
+
+<link href="/static/css/common.css" rel="stylesheet">
+
+{% endblock %}
+
+{% block js %}
+
+{% endblock %}
+
+
+{% block body %}
+<div class="pageContentsWrapper">
+    <div class="pageContents">
+        {{ uploadResults|safe }}
+    </div>
+</div>
+
+{% endblock %}
