@@ -19,18 +19,8 @@ $( document ).ready( function (){
 
     console.log( results )
     for( var i = 0; i < results.length; i++ ){
-        console.log( results[i] )
-        for( var j = 0; j < results[i].length; j++ ){
-            console.log( results[i][j] )
-            if( results[i][j]._objectType != 'SearchableObject' ){
-                var url = results[i][j]._data_info.fileLocation + results[i][j]._data_info.filename
-                console.log( "here" + url)
-                $('.pageContents').append("<img class='imgFixWidth' src='"+url+"' />")
-                break;
-            }else{
-                console.log( "here" + results[i][j]._objectType )
-            }
-        }
+        var loc = results[i].files[0].fileLocation + results[i].files[0].filename
+        $('.pageContents').append("<img class='imgFixWidth' src='" + loc + "' />");
     }
 })
 </script>

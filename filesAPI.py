@@ -45,6 +45,7 @@ def storeFile( f, originalFilename='' ):
   print fileInfo['hash']
 
   if existingFileIdDict != None:
+    #todo: if it does exist check to make sure if it's a valid file (the hash database could be outdated/broken/drunk)
     print 'existing file'
     #call special update function
     existingFileInfo = databaseFunctions.getFileInfo( existingFileIdDict['fileId'] )

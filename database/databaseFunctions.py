@@ -16,9 +16,9 @@ def getNewDatabaseId():
 #TODO: explain difference between this and getObjectType
 #FIXME: shouldn't be hardcoded
 def getFileType( databaseId ):
+  #todo: what should this do if it get's none ????
+  #todo: return error saying bad id
   objType = getObjectType( databaseId )
-  if objType == None:
-    return None
 
   if objType   == databaseObjects.ImageFile.getClassId():
     return 'image'
@@ -31,27 +31,30 @@ def getFileType( databaseId ):
     print objType
 
 def getObjectType( databaseId ):
-  data = objectInfoDatabase.getVal( databaseKeyFormat.format( databaseId, databaseObjects.objectTypePrefix ) )
+  data = objectInfoDatabase.getVal( databaseKeyFormat.format( databaseId, objectTypePrefix ) )
   return data
 
-def getFileInfo( databaseId ):#TODO: this should return non if the databaseId doesn't exist
+#TODO: this should return non PLUS AN ERROR (but not an exception) if the databaseId doesn't exist
+def getFileInfo( databaseId ):
   f = getFile( databaseId )
   if not f:
     return None
-  result = f.serialize()
-  return result['_data_info']#FIXME: THIS SHOULD NOT BE hardcoded
+  return f.getFileInfo()
 
 #check if file exists
+#FIXME: this is all really messy
 def isFile( databaseId ):
-  #FIXME: clean up
+  #FIXME: clean up#THIS DOESN'T EVEN FUCKING CHECK IF IT'S A FILE !!!! GODDAM!
   if getFileType( databaseId ) == None:
-    return None
+      return False
   else:
-    return getFileType( databaseId )
+    return True
 
 def getFile( databaseId ):
+  print databaseId
   if not isFile( databaseId ):
-    return None
+    print "it's not a file"
+    return 0, "ERROR: databaseId does not point to a file"#todo: lets try use this format for errors
 
   newFile = createNewFile( databaseId, { 'type': getFileType( databaseId ) } )
   newFile.load()
@@ -71,42 +74,22 @@ def createNewFile( databaseId, fileInfo ):
   else:
     print "ERROR: create new file, bad objType given"
 
-def getSerializedObject( databaseId ):
-  #TODO: this could cause problems if the keyFormat in objectInfoDatabase changes, because it won't be a stub
-  result = objectInfoDatabase.getMultiWithStub( databaseId+'_' )
-  data = {}
-  for k,v in result.iteritems():
-    if databaseObjects.dataPrefix in k:
-      data.update( { k.replace( databaseObjects.dataPrefix, '' ): v } )
+def getSerializedObject( databaseId, keys ):
+  result = {}
+  for k in keys:
+    result.update( { k: objectInfoDatabase.getVal( databaseKeyFormat.format( databaseId, k )) } )
 
-  result.update( { databaseObjects.dataPrefix : data } )
   return result
 
-def storeSerializedObjects( serializedObjs ):#TODO: write for multiple objs
-  if not type( serializedObjs ) is list:
-    serializedObjs = [ serializedObjs ]
+objectTypePrefix = '_objectType'
+def storeObjectInfo( dataOneDimensionalDict, databaseId, classId ):
+  new = {}
+  for k, v in dataOneDimensionalDict.iteritems():
+    key = databaseKeyFormat.format( databaseId, k )
+    new.update({ key: v })
 
-  for serializedObj in serializedObjs:
-    databaseId = serializedObj[ databaseObjects.databaseIdPrefix ]
-    del serializedObj[ databaseObjects.databaseIdPrefix ]
-    #FIXME: HACKS HACKS
-    new = {}
-    for k, v in serializedObj.iteritems():
-      key = databaseKeyFormat.format( databaseId, k )
-      new.update({ key: v })
-
+  new.update({ databaseKeyFormat.format( databaseId, objectTypePrefix ): classId })
   objectInfoDatabase.setMutli( new )
-
-def createSerializeObj( data, databaseId, classId ):
-  result = {
-      databaseObjects.databaseIdPrefix: databaseId,
-      databaseObjects.objectTypePrefix: classId
-    }
-  for k, v in data.iteritems():
-    key = databaseObjects.dataPrefix + k
-    result.update( { key : v } )
-
-  return result
 
 def getFileIdWithHash( hash ):
   return fileHashDatabase.getRelatedIds( hash )
@@ -117,11 +100,12 @@ def addFileToDatabase( fileInfo, fileDatabaseId=None, searchableInfo={} ):
   if fileDatabaseId == None:
     fileDatabaseId = getNewDatabaseId()
 
-  fileHashDatabase.set( fileInfo['hash'], searchableDatabaseId, fileDatabaseId )
   #TODO: look over these inputs for searchable object, anyway to simplify ?
-  s = databaseObjects.SearchableObject( databaseId=searchableDatabaseId, fileType=fileInfo['type'], metadata=str( fileInfo['metadata'] ) )
-  s.addNewFile( fileDatabaseId, fileInfo )
+  s = databaseObjects.SearchableObject( databaseId=searchableDatabaseId,
+                                       fileType=fileInfo['type'], metadata=str( fileInfo['metadata'] ) )
+  s.addNewFile( fileInfo, fileDatabaseId )
   s.save()
+  fileHashDatabase.set( fileInfo['hash'], searchableDatabaseId, fileDatabaseId )#todo: make sure everything else worked before adding to the hashDB
 
   return {
       'databaseId': searchableDatabaseId,
@@ -132,8 +116,8 @@ def addFileToDatabase( fileInfo, fileDatabaseId=None, searchableInfo={} ):
 ###############################################################################################
 
 def getObjectInfo( databaseId ):
-  data = getSearchableObject( databaseId )
-  return data.serialize()
+  s = getSearchableObject( databaseId )
+  return s.getData()
 
 def getSearchableObject( databaseId ):
   s = databaseObjects.SearchableObject( databaseId )

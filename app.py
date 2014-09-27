@@ -35,15 +35,12 @@ def showSearchWithGetQuery():
     return render_template("search.html", searchResults = 'test' )
   else:
     searchResults = search.getSearchResultsWithQuery( query = query )
-    print searchResults
     return render_template( "search.html", searchResults = searchResults )
 
 
 @app.route("/s/<query>")
 def showSearchWithUrlQuery(query):
-  print "here3"
   searchResults = search.getSearchResultsWithQuery( query = query )
-  print searchResults
   return render_template( "search.html", searchResults = searchResults )
 
 

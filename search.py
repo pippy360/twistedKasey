@@ -11,7 +11,7 @@ def getSearchResultsWithQuery( query ):
   for imageId in sortedImageIdList:
     print 'image id : '
     print imageId
-    objData = databaseFunctions.getObjectInfo( imageId[0] )
+    objData = databaseFunctions.getObjectInfo( imageId )
     result.append( objData )
 
   return json.dumps( result )

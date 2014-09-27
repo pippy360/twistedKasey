@@ -12,10 +12,6 @@ def addTags( databaseID, tagsList ):
   if isinstance( tagsList, basestring):
     tagsList = [ tagsList ]
 
-  print 'adding tag'
-  print tagsList
-  print databaseID
-
   for tag in tagsList:
     keywordRedisDB.sadd( keyFormat.format( keyStringPrefix, tag ), databaseID )
 

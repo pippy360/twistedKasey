@@ -1,4 +1,3 @@
-#there's a problem here with that databaseId, should we be using a databaseId ? nope
 import redis
 
 #only this module should know about this key prefix
@@ -10,8 +9,8 @@ objectInfoRedisDB = redis.StrictRedis( '127.0.0.1', 6379 )#TODO: move to config 
 def getObjectType( databaseId ):
   pass
 
-def setMutli( serializedObj ):
-  for k, val in serializedObj.iteritems():
+def setMutli( inputDict ):
+  for k, val in inputDict.iteritems():
     key = keyFormat.format( keyStringPrefix, k )
     _setVal( key, val )
 
@@ -31,21 +30,13 @@ def _setVal( key, val ):
   else:
     print "ERROR bad set"#TODO: learn errors
 
-#def getMulti( keys ):
-#  pass
 
 #TODO: comment
-def getMultiWithStub( keyStub, removeStub=True ):#TODO: rename this to what it actually does
-  #FIXME: THERE IS AN ERROR HERE IF THE ID IS 2 NUMBERS LIKE 22 will be returned, fix ? maybe get with stub is a bad idea
+def getMulti( keys ):
   result = {}
-  k = keyFormat.format( keyStringPrefix, keyStub )
-  print objectInfoRedisDB.keys( k+'*' )
-  for key in objectInfoRedisDB.keys( k+'*' ):
-    if removeStub:
-      resultKey = key.replace( k, '' )
-    else:
-      resultKey = key.replace( keyStringPrefix, '' )
-    result.update( { key.replace( k, '' ) : _getVal( key ) } )
+  for k in keys:
+    key = keyFormat.format( keyStringPrefix, k )
+    result.update( { k: _getVal( key ) } )
 
   return result
 

@@ -1,16 +1,16 @@
-#TODO: UPLOAD DATA
+#TODO: be able to save user UPLOAD DATA(ip addr and stuff)
+#TODO: change SearchableObject name
 import objectInfoDatabase
 import databaseFunctions
 
 acceptedFileTypes = ['image','video','sound']#TODO: MOVE THIS TO A CONFIG
 databaseIdPrefix = '_databaseId'
-objectTypePrefix = '_objectType'
 dataPrefix = '_data_'
 
 #TODO: explain
 class StorableObject( object ):
 
-  simpleInstantVarsPrefix = 'info'
+  localPrimitivesKey = 'info'
 
   @classmethod
   def getClassId( cls ):
@@ -20,23 +20,20 @@ class StorableObject( object ):
     if databaseId == None:
       databaseId = databaseFunctions.getNewDatabaseId()
 
-  def createSerializeObj( self, data ):
-    return databaseFunctions.createSerializeObj( data, self.databaseId, self.__class__.getClassId() )
-
   def save( self ):
     data = self.serialize()
-    databaseFunctions.storeSerializedObjects( data )
+    databaseFunctions.storeObjectInfo( data, self.databaseId, self.getClassId() )#FIXME:
 
   def load( self ):
-    serializedObj = databaseFunctions.getSerializedObject( self.databaseId )
-    print serializedObj
-    self.deserialize( serializedObj )
+    keys = [ self.localPrimitivesKey ]
+    serializedObj = databaseFunctions.getSerializedObject( self.databaseId, keys )
+    self.deserialize( serializedObj[ self.localPrimitivesKey ] )
 
   def serialize( self ):
-    return self.createSerializeObj( {} )
+    return self.createDatabaseObj( {} )
 
   def deserialize( self, serializedObj ):
-    for key, val in serializedObj[ dataPrefix ][ self.simpleInstantVarsPrefix ].iteritems():
+    for key, val in serializedObj.iteritems():
       if isinstance( val, (int, long, float, complex, basestring, list) ):
         setattr( self, key, val )
       else:
@@ -45,7 +42,8 @@ class StorableObject( object ):
 
 class SearchableObject( StorableObject ):
   #TODO: add file function, make sure it doesn't let two files with the same databaseId
-  fileIdsPrefix = 'fileIds'
+  fileIdsKey = 'fileIds_'
+  searchableObjectString = 'searchableObject'
 
   def __init__( self, databaseId, fileType = '', title = '', description = '',
                metadata = '', relatedFileIds = '', uploadInfo = '' ):
@@ -59,7 +57,7 @@ class SearchableObject( StorableObject ):
     self.relatedFileIds = relatedFileIds
     self.uploadInfo     = uploadInfo
 
-  def addNewFile( self, databaseId=None, fileInfo={} ):
+  def addNewFile( self, fileInfo,databaseId=None ):
     for f in self.files:
       if f.databaseId == databaseId:
         print "ERROR: file with id exists"
@@ -68,49 +66,59 @@ class SearchableObject( StorableObject ):
     self.files.append( databaseFunctions.createNewFile( databaseId, fileInfo ) )
 
   def save( self ):
+    fileIds = []
     for f in self.files:
       f.save()
+      fileIds.append( f.databaseId )
 
-    databaseFunctions.storeSerializedObjects( self.simpleSerialize() )
+    data = self.serialize()
+    data.update( { self.fileIdsKey : fileIds } )
+    databaseFunctions.storeObjectInfo( data, self.databaseId, self.getClassId() )
 
   def load( self ):
     self.files = []
-    fileIds = []
-    serializedObj = databaseFunctions.getSerializedObject( self.databaseId )
-    data = serializedObj[ dataPrefix ]
-    fileIds = serializedObj[ dataPrefix ].get( self.fileIdsPrefix, [] )
+
+    keys = [ self.localPrimitivesKey, self.fileIdsKey ]
+    serializedObj = databaseFunctions.getSerializedObject( self.databaseId, keys )
+    self.deserialize( serializedObj[ self.localPrimitivesKey ] )
+
+    #todo: clean up the fileIds == None
+    #load the related files
+    fileIds = serializedObj.get( self.fileIdsKey, [] )
+    if fileIds == None:
+      return
+
     for fileId in fileIds:
       f = databaseFunctions.getFile( fileId )
+      print fileId
+      print 'adding file'
+      print f
       self.files.append( f )
 
-  #TODO: explain
-  #this serializes just the easy to serialize variables, it ignores stuff like self.files
-  def simpleSerialize( self ):
-    info = {
+  #todo: comment
+  #data that is sent to the client in json
+  def getData( self ):#FIXME: hardcoded
+    result  = { 'files': [] }
+    for f in self.files:
+      result['files'].append( f.getFileInfo() )#fixme: hardcoded
+
+    result.update( { self.searchableObjectString: self.serializePrimitives() } )
+    return result
+
+  #serializes the local primitive vars
+  #(i.e. the variable that can be grouped and stored in a redis hash)
+  def serializePrimitives( self ):
+    return {
           'fileType':       self.fileType,
           'title':          self.title,
           'description':    self.description,
           'metadata':       self.metadata,
           'relatedFileIds': self.relatedFileIds,
-          'uploadInfo':     self.uploadInfo,
+          'uploadInfo':     self.uploadInfo
       }
-    fileIds = []
-    for f in self.files:
-      fileIds.append( f.databaseId )
-
-    return self.createSerializeObj( {
-          self.simpleInstantVarsPrefix : info,
-          self.fileIdsPrefix: fileIds
-      } )
 
   def serialize( self ):
-    result  = []
-    for f in self.files:
-      result.append( f.serialize() )
-
-    result.append( self.simpleSerialize() )
-
-    return result
+    return { self.localPrimitivesKey: self.serializePrimitives() }
 
 
 class uploadInfo( StorableObject ):
@@ -133,8 +141,12 @@ class BasicFile( StorableObject ):
     self.mimetype     = fileData.get( 'mimetype' )
     self.fileMetadata = fileData.get( 'metadata' )
 
-  def serializeBasicFile( self ):
+  def getFileInfo( self ):
+    return self.serializePrimitives()
+
+  def serializePrimitives( self ):
     return {
+      'databaseId'  : self.databaseId,
       'originalFile': self.originalFile,
       'fileHash':     self.fileHash,
       'filename':     self.filename,
@@ -145,7 +157,7 @@ class BasicFile( StorableObject ):
     }
 
   def serialize( self ):
-    return self.createSerializeObj( { self.simpleInstantVarsPrefix: self.serializeBasicFile() } )
+    return { self.localPrimitivesKey: self.serializePrimitives() }
 
 
 class ImageFile( BasicFile ):
