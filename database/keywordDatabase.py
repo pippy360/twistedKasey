@@ -20,8 +20,6 @@ def getIntersection( keywords ):
   for keyword in keywords:
     fixed.append( keyFormat.format( keyStringPrefix, keyword ) )
 
-  print 'checked keys'
-  print fixed
   return keywordRedisDB.sinter( fixed )
 
 def removeFileIdFromTag( databaseID, tag ):

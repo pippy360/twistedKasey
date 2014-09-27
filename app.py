@@ -2,11 +2,10 @@
 import search
 import filesAPI
 import urlHandler
-#import thumbnailGenerator
+import thumbnailGenerator
 
 from flask import Flask, render_template, request, send_file
 app = Flask(__name__)
-
 
 @app.route("/")
 @app.route("/home")
@@ -46,7 +45,7 @@ def showSearchWithUrlQuery(query):
 
 @app.route("/thumb")
 def handleThumbnailRequest():
-  return send_file('./static/img/1.png', mimetype='image/gif')
+  return thumbnailGenerator.handleThumbnailRequest( request )
 
 
 if __name__ == "__main__":

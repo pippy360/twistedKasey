@@ -25,7 +25,8 @@ def hanldeUploadFormSubmit( request ):
   #databaseFunctions.updateData(  )
   return working
 
-#TODO: this should really be moved to the databaseFunctions, encase the layout of databases changes
+#TODO: this should really be moved to the databaseFunctions, incase the layout of databases changes
+#TODO: clean up
 def storeFile( f, originalFilename='' ):
 
   fileInfo = getFileInfo( f )

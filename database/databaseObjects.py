@@ -46,9 +46,9 @@ class SearchableObject( StorableObject ):
   searchableObjectString = 'searchableObject'
 
   def __init__( self, databaseId, fileType = '', title = '', description = '',
-               metadata = '', relatedFileIds = '', uploadInfo = '' ):
+               metadata = '', relatedFileIds = '', uploadInfo = '', tags=[] ):
     self.files = []
-
+    self.tags           = tags
     self.databaseId     = databaseId
     self.fileType       = fileType
     self.title          = title
@@ -90,9 +90,6 @@ class SearchableObject( StorableObject ):
 
     for fileId in fileIds:
       f = databaseFunctions.getFile( fileId )
-      print fileId
-      print 'adding file'
-      print f
       self.files.append( f )
 
   #todo: comment

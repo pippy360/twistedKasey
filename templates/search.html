@@ -3,9 +3,31 @@
 
 <link href="/static/css/common.css" rel="stylesheet">
 <style>
-.imgFixWidth{
-    max-width: 250px;
-    max-height:250px;
+.info{
+    position: absolute;
+    top: 214px;
+    width: 208px;
+    font-size: 16px;
+}
+.imgFixWidthCont{
+    float: left;
+    width: 208px;
+    height:208px;
+    text-align: center;
+    vertical-align: bottom;
+    display: table-cell;
+    position: relative;
+}
+.imgWrap{
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+}
+.imgWrap img{
+ cursor: pointer;
 }
 </style>
 {% endblock %}
@@ -16,11 +38,14 @@
 //TODO: this is very hacky
 $( document ).ready( function (){
     var results = {{ searchResults|safe }};
+    var width  = 208;
+    var height = 208;
 
     console.log( results )
     for( var i = 0; i < results.length; i++ ){
-        var loc = results[i].files[0].fileLocation + results[i].files[0].filename
-        $('.pageContents').append("<img class='imgFixWidth' src='" + loc + "' />");
+        var id = results[i].files[0].databaseId
+        var loc = "http://localhost:5000/thumb?imageId="+ id +"&width="+ width +"&height=" + height
+        $('.pageContents').append("<div class='imgFixWidthCont'><div class='imgWrap'><div class='closeWrap'><img class='imgFixWidth' src='" + loc + "' /></div></div><div class='info'>"+results[i].files[0].filename+"</div></div>");
     }
 })
 </script>

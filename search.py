@@ -9,8 +9,6 @@ def getSearchResultsWithQuery( query ):
   result = []
   print sortedImageIdList
   for imageId in sortedImageIdList:
-    print 'image id : '
-    print imageId
     objData = databaseFunctions.getObjectInfo( imageId )
     result.append( objData )
 

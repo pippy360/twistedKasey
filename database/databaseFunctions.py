@@ -34,12 +34,6 @@ def getObjectType( databaseId ):
   data = objectInfoDatabase.getVal( databaseKeyFormat.format( databaseId, objectTypePrefix ) )
   return data
 
-#TODO: this should return non PLUS AN ERROR (but not an exception) if the databaseId doesn't exist
-def getFileInfo( databaseId ):
-  f = getFile( databaseId )
-  if not f:
-    return None
-  return f.getFileInfo()
 
 #check if file exists
 #FIXME: this is all really messy
@@ -51,7 +45,6 @@ def isFile( databaseId ):
     return True
 
 def getFile( databaseId ):
-  print databaseId
   if not isFile( databaseId ):
     print "it's not a file"
     return 0, "ERROR: databaseId does not point to a file"#todo: lets try use this format for errors
@@ -59,6 +52,13 @@ def getFile( databaseId ):
   newFile = createNewFile( databaseId, { 'type': getFileType( databaseId ) } )
   newFile.load()
   return newFile
+
+#TODO: this should return non PLUS AN ERROR (but not an exception) if the databaseId doesn't exist
+def getFileInfo( databaseId ):
+  f = getFile( databaseId )
+  if not f:
+    return None
+  return f.getFileInfo()
 
 def addTags( databaseId, tagsList ):
   keywordDatabase.addTags( databaseId, tagsList )

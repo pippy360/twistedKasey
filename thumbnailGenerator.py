@@ -1,39 +1,55 @@
+
 from flask import send_file
 import os.path
-import image
+import Image
 import math
-import imageInfoDatabase
+import ast
+from database   import databaseFunctions, databaseObjects
 
-thumbnailCacheFolder = './static/cache/thumbs'
+thumbnailCacheFolder = '/static/cache/thumbs'#DIRTY QUICK FIX
 
+#FIXME: this whole thing is patched together with horrible code just to get it working
 
 def handleThumbnailRequest( request ):
-  pass
-  #send_file('./static/img/1.png', mimetype='image/gif')
+  print request.args
+  height  = request.args['height']
+  width   = request.args['width']
+  imageId = request.args['imageId']
+  fileloc = genThumbnail( imageId, (int( width ), int( height) ) )
+  return send_file( fileloc, mimetype='image/png')
 
 
 #if maintainAspectRatio is true then 'size' is the max possible width/height of the thumbnail
 def genThumbnail( imageId, size, maintainAspectRatio=True ):
-  imageInfo = imageInfoDatabase.getImageInfo( imageId )
+  imageInfo = databaseFunctions.getFileInfo( imageId )
+
+  result = {}
+  result = ast.literal_eval( imageInfo['fileMetadata'] )
+
+  width  = result['dimensions']['width']
+  height = result['dimensions']['height']
+
+  imageInfoSize = ( width , height )
 
   if maintainAspectRatio:
-    thumbSize = getThumbnailSize( imageInfo.size, size )
+    thumbSizeX, thumbSizeY = getThumbnailSize( imageInfoSize, size )
   else:
     thumbSize = size
 
-  thumbFilename = getThumbnailFilename( imageId, thumbSize )
+  thumbFilename = getThumbnailFilename( imageId, thumbSizeX, thumbSizeY )
   if os.path.isfile( thumbnailCacheFolder + thumbFilename ):#check cache
     return thumbnailCacheFolder + thumbFilename
 
-  orginalImg = Image.open( imageInfo.filename )
-  im = orginalImg.resize((width, height), Image.ANTIALIAS)
-  im.save( thumbnailCacheFolder + thumbFilename )
+  loc = '.' + imageInfo['fileLocation'] + imageInfo['filename']
+  orginalImg = Image.open( loc )
+  im = orginalImg.resize((thumbSizeX, thumbSizeY), Image.ANTIALIAS)
+  im.save( '.' + thumbnailCacheFolder + thumbFilename + imageInfo['extension'] )
 
-  return thumbnailCacheFolder + thumbFilename
+  return '.' + thumbnailCacheFolder + thumbFilename + imageInfo['extension']
 
 
 def getThumbnailFilename( imageId, width, height ):
-  return "thumbnail_{0}_{1}_{2}".format( imageid, width, height )
+  return "thumbnail_{0}_{1}_{2}".format( imageId, width, height )
 
 
 def getThumbnailSize( imageSize, thumbSize):
