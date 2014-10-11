@@ -17,6 +17,7 @@
     vertical-align: bottom;
     display: table-cell;
     position: relative;
+    margin-bottom: 88px;
 }
 .imgWrap{
     display: inline-block;
@@ -27,7 +28,22 @@
     left: 0px;
 }
 .imgWrap img{
- cursor: pointer;
+    cursor: pointer;
+}
+.tags{
+    color: #aaa;
+    font-size: 12px;
+}
+.tags a{
+    color: #aaa;
+
+}
+.tags a:hover{
+    color: red;
+    text-decoration: initial;
+}
+.title{
+
 }
 </style>
 {% endblock %}
@@ -44,16 +60,41 @@ $( document ).ready( function (){
     console.log( results )
     for( var i = 0; i < results.length; i++ ){
         var id = results[i].files[0].databaseId
+        var tags = results[i].tags_
         var loc = "http://localhost:5000/thumb?imageId="+ id +"&width="+ width +"&height=" + height
-        $('.pageContents').append("<div class='imgFixWidthCont'><div class='imgWrap'><div class='closeWrap'><img class='imgFixWidth' src='" + loc + "' /></div></div><div class='info'>"+results[i].files[0].filename+"</div></div>");
+        $('.pageContents').append( getImagePreviewHtml( loc, results[i].files[0].filename, tags ) );
     }
 })
+
+//TODO:
+function getImagePreviewHtml( location, filename, tags ){
+
+    var tagsString = ''
+    for(var j = 0; j < tags.length; j++){
+        if( j != 0 )
+            tagsString += ', ';
+
+        tagsString += "<a href='?q="+ tags[j] +"'>"+ tags[j] +"</a>";
+    }
+
+    outputHtml  = "<div class='imgFixWidthCont'>";
+    outputHtml += "    <div class='imgWrap'>";
+    outputHtml += "        <div class='closeWrap'>";
+    outputHtml += "            <img class='imgFixWidth' src='" + location + "' />";
+    outputHtml += "        </div>";
+    outputHtml += "    </div>";
+    outputHtml += "    <div class='info'><a href='#'>"+ filename +"</a><br><span class='tags'>"+ tagsString +"</span></div>";
+    outputHtml += "</div>";
+    return outputHtml
+}
+
 </script>
 {% endblock %}
 
 {% block body %}
 <div class="pageContentsWrapper">
     <div class="pageContents clearfix">
+        <br>
     </div>
 </div>
 {% endblock %}

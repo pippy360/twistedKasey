@@ -95,14 +95,14 @@ def getFileIdWithHash( hash ):
   return fileHashDatabase.getRelatedIds( hash )
 
 #stores a file in the database
-def addFileToDatabase( fileInfo, fileDatabaseId=None, searchableInfo={} ):
+def addFileToDatabase( fileInfo, fileDatabaseId=None, searchableInfo={}, tags=[] ):
   searchableDatabaseId = getNewDatabaseId()
   if fileDatabaseId == None:
     fileDatabaseId = getNewDatabaseId()
 
   #TODO: look over these inputs for searchable object, anyway to simplify ?
-  s = databaseObjects.SearchableObject( databaseId=searchableDatabaseId,
-                                       fileType=fileInfo['type'], metadata=str( fileInfo['metadata'] ) )
+  s = databaseObjects.SearchableObject( databaseId=searchableDatabaseId, fileType=fileInfo['type'],
+                                       metadata=str( fileInfo['metadata'] ), tags=tags )
   s.addNewFile( fileInfo, fileDatabaseId )
   s.save()
   fileHashDatabase.set( fileInfo['hash'], searchableDatabaseId, fileDatabaseId )#todo: make sure everything else worked before adding to the hashDB

@@ -13,8 +13,8 @@ filesLocation = './static/storage/'
 def hanldeUploadFormSubmit( request ):
   working = []
   for k, f in request.files.iteritems():
-    returnData = storeFile( f )
     tags = request.form['tags'].split()
+    returnData = storeFile( f, tags=tags )
     if tags:
       databaseFunctions.addTags( returnData['databaseId'], tags )#FIXME: THIS IS SO FUCKING HACKY
     working.append( returnData['fileLocation'] )
@@ -27,7 +27,7 @@ def hanldeUploadFormSubmit( request ):
 
 #TODO: this should really be moved to the databaseFunctions, incase the layout of databases changes
 #TODO: clean up
-def storeFile( f, originalFilename='' ):
+def storeFile( f, tags=[],originalFilename='' ):
 
   fileInfo = getFileInfo( f )
 
@@ -58,7 +58,7 @@ def storeFile( f, originalFilename='' ):
     #FIXME: ALL THIS IS SO FUCKING MESSY
     print 'new File'
     #TODO: write the return information and decide on a standard way of doing it
-    fileIds = databaseFunctions.addFileToDatabase( fileInfo )
+    fileIds = databaseFunctions.addFileToDatabase( fileInfo, tags=tags )
     f.seek( 0 )
     f.save( filePath + fileInfo['filename'] )
     return {

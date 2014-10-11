@@ -1,0 +1,339 @@
+{% extends "baseLayout.html" %}
+{% block css %}
+
+<link href="/static/css/common.css" rel="stylesheet">
+<style>
+.pageContentsWrapper{
+    
+}
+
+.leftPanelWrapper{
+	float: left;
+}
+
+.leftPanel{
+	width: 230px;
+	height: 800px;
+    background-color: #f2f4f6;
+}
+.pictureDisplayAreaWrapper{
+	float: left;
+	width: 1000px;
+	height: 1200px;
+	background-color: white;
+	padding: 10px;
+}
+.selection{
+	position: absolute;
+	border: 1px solid #89b;
+	background: #bce; 
+	background-color: #bce;
+	border-color: #8b9;
+}
+.imageDisplayWrapper{
+	background-color: green;
+	color: white;
+	float: left;
+	height: 100px;
+	width: 100px;
+	margin: 5px;
+}
+.filterInputAreaWrapper{
+	margin: 10px;
+	margin-top: 5px;
+	width: 100%;
+
+}
+.filterInputAreaWrapper input{
+	width: 700px;
+	padding: 8px;
+}
+.imageDisplayWrapper.active{
+}
+.imageDisplayWrapper.toBeSelected{
+	background-color: blue !important;
+}
+.imageDisplayWrapper.toBeDeselected{
+	background-color: green !important;
+}
+.imageDisplayWrapper.selected{
+	background-color: blue;
+}
+.leftPanel{
+	margin-top: 10px;
+	padding: 10px;
+}
+.leftPanel button{
+	margin: 5px;
+}
+.leftPanel textarea{
+	margin: 5px;
+	height: 100px;
+	border: 0px;
+}
+</style>
+
+{% endblock %}
+
+{% block js %}
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="/static/js/jquery.event.drag-2.2.js"></script>
+<script src="/static/js/jquery.event.drag.live-2.2.js"></script>
+<script src="/static/js/jquery.event.drop-2.2.js"></script>
+<script src="/static/js/jquery.event.drop.live-2.2.js"></script>
+
+<script type="text/javascript">
+jQuery(function($){
+   $( document )
+      .drag("start",function( ev, dd ){
+		if (!ev.ctrlKey){//wipe all previous selected ones
+			state.selectedImages = [];
+			applySelectClass();
+		}
+
+      	 return $('<div class="selection" />')
+            .css('opacity', .65 )
+            .appendTo( document.body );
+      })
+      .drag(function( ev, dd ){
+
+         $( dd.proxy ).css({
+            top: Math.min( ev.pageY, dd.startY ),
+            left: Math.min( ev.pageX, dd.startX ),
+            height: Math.abs( ev.pageY - dd.startY ),
+            width: Math.abs( ev.pageX - dd.startX )
+         });
+      })
+      .drag("end",function( ev, dd ){
+         $( dd.proxy ).remove();
+         updateSelectedImagesState()
+      });
+   	$.drop({ multi: true });
+});
+
+
+var state = {
+	allTags: {},
+	allImages: [],
+	selectedImages: [],
+	visableImages: [],
+	currentFilter: ""
+}
+
+images = {{ imageFilenamesListString|safe }}
+
+function displayAllImages(){
+	visableImages = state.allImages;
+	displayVisableImages();
+}
+
+function loadAllImages(){
+	for (var i = 0; i < images.length; i++) {
+		state.allImages.push( images[i] );
+		state.allTags[ images[i] ] = [];
+		state.visableImages.push( images[i] );
+	}
+}
+
+//display all the images in state.visableImages
+//also apply hooks and classes
+function displayVisableImages(){
+	$(".pictureDisplayArea").html('');
+	for( var i = 0; i < state.visableImages.length; i++ ){
+		$(".pictureDisplayArea").append("<div class='imageDisplayWrapper' data-id='"+ state.visableImages[i] +"'>	\
+			"+ state.visableImages[i] +"\
+			<span class='tags'>\
+			</span>\
+		</div>")
+	}
+	applyVisableImageHooks();
+	applySelectClass();
+}
+
+function applySelectClass(){
+	$('.imageDisplayWrapper').removeClass( 'selected' )
+
+	for( var i = 0; i < state.selectedImages.length; i++ ){
+		$('.imageDisplayWrapper').each( function(){
+			if( $( this ).attr('data-id') == state.selectedImages[i] ){
+				$( this ).addClass( 'selected' );
+			}
+		});
+	}
+}
+
+//unselect all other images, only select imageId
+function selectOnly( imageId ){
+	state.selectedImages = [];
+	selectImage( imageId );
+}
+
+//add an image to selected Images, 
+//add to state.selectedImages and update the divs classes
+function selectImage( imageId ){
+	if( !inArray( imageId, state.selectedImages ) )
+		state.selectedImages.push( imageId );
+
+	applySelectClass();
+}
+
+function deselectImage( imageId ){
+	arrayRemove( imageId, state.selectedImages )
+	applySelectClass();
+}
+
+function arrayRemove( element, array ){
+	var index = array.indexOf( element );
+	if (index > -1) {
+		array.splice(index, 1);
+	}
+}
+
+function inArray( element, array ){
+	for (var i = 0; i < array.length; i++)
+		if ( array[i] == element )
+			return true;
+	return false;
+}
+
+function addTagsToSelected( tags ){
+	for (var i = 0; i < state.selectedImages.length; i++)
+		addTagsToImage( state.selectedImages[i], tags )
+}
+
+function addTagsToImage( imageId, tags ){
+	for (var i = 0; i < tags.length; i++ )
+		if( !inArray( tags[i], state.allTags[imageId] ) ){
+			if(tags[i] != "")
+				state.allTags[imageId].push( tags[i] );
+		}
+}
+
+function updateTagDivs(){
+	$('.imageDisplayWrapper').each( function(){
+		tags = state.allTags[ $( this ).attr('data-id') ];
+		for (var i = 0; i < tags.length; i++) {
+			$( this ).find('tags').append("<span class='tag'>"+ tags[i] +"</span>")
+		}
+	})
+}
+
+function applyVisableImageHooks(){
+    $('.imageDisplayWrapper')
+      .drop("start",function(e){
+		if( $( this ).attr('class').indexOf('selected') != -1 )
+			$( this ).addClass("toBeDeselected");
+		else
+			$( this ).addClass("toBeSelected");
+      })
+      .drop(function( ev, dd ){
+         $( this ).toggleClass("selected");
+      })
+      .drop("end",function(){
+		$( this ).removeClass("toBeDeselected");
+		$( this ).removeClass("toBeSelected");
+      })
+      .click(function(e){
+      	 if (e.ctrlKey)
+      	 	if( $( this ).attr('class').indexOf('selected') != -1 ){
+      	 		deselectImage( $( this ).attr("data-id") );
+			}else{
+      	 		selectImage( $( this ).attr("data-id") );
+			}
+      	 else
+      	 	selectOnly( $( this ).attr("data-id") );
+      });
+
+}
+
+function updateSelectedImagesState(){
+	state.selectedImages = [];
+	$('.imageDisplayWrapper.selected').each( function(){
+		state.selectedImages.push( $( this ).attr('data-id') );
+	})
+}
+
+function showOnlySelected(){
+	$('.imageDisplayWrapper').each( function(){
+		if( $( this ).attr('class').indexOf('selected') == -1 ){
+			$( this ).remove()
+		}
+	})
+}
+
+function invertSelection(){
+	$('.imageDisplayWrapper').each( function(){
+		if( $( this ).attr('class').indexOf('selected') != -1 ){
+			$( this ).removeClass('selected')
+		}else{
+			$( this ).addClass('selected')
+		}
+	})
+	updateSelectedImagesState();
+}
+
+function getImageTagJsonData(){
+	return JSON.stringify( state.allTags )
+}
+
+function setImageTagData( inputJson ){
+
+}
+
+function applyPageHooks(){
+	$('#jsonInputGetButton').click( function(){
+		$('#jsonInputTextarea').val( getImageTagJsonData() );
+	})
+
+	$('#jsonInputLoadButton').click( function(){
+
+	})
+
+	$('#tagsInputButton').click( function(){
+		text = $('#tagsInputTextarea').val();
+		tags = text.split(/[ ,]+/);
+		
+		addTagsToSelected( tags );
+	})
+}
+
+$( document ).ready(function() {
+	loadAllImages();
+	displayVisableImages();
+	applyPageHooks();
+});
+
+
+</script>
+{% endblock %}
+
+
+{% block body %}
+
+
+<div class="pageContentsWrapper">
+	<div class="buildUiWrapper clearfix">
+		<div class="leftPanelWrapper clearfix">
+			<div class="leftPanel">
+				<button onclick="displayAllImages()">Display all images</button><br>
+				<button onclick="showOnlySelected()">Show only selected</button><br>
+				<button onclick="invertSelection()"	>invert 		   </button><br>
+				<textarea id="tagsInputTextarea" placeholder="Tags"></textarea><br>
+				<button   id="tagsInputButton" >add tags to slected</button><br>
+				<h3>json data</h3>
+				<textarea id="jsonInputTextarea" placeholder="Json"></textarea>
+				<button   id="jsonInputGetButton" >get Image/Tag data</button><br>
+				<button   id="jsonInputLoadButton" >load images using Json data</button><br>
+			</div>
+		</div>
+		<div class="pictureDisplayAreaWrapper">
+			<div class="filterInputAreaWrapper">
+				<div>Select by tag: <input value="" /></div>
+			</div>
+			<div class="pictureDisplayArea">
+
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

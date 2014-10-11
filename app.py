@@ -3,6 +3,7 @@ import search
 import filesAPI
 import urlHandler
 import thumbnailGenerator
+import databaseBuilder
 
 from flask import Flask, render_template, request, send_file
 app = Flask(__name__)
@@ -47,6 +48,10 @@ def showSearchWithUrlQuery(query):
 def handleThumbnailRequest():
   return thumbnailGenerator.handleThumbnailRequest( request )
 
+@app.route("/build")
+def showBuildPage():
+  imageFilenamesListString = databaseBuilder.getImageIds()
+  return render_template("build.html", imageFilenamesListString)
 
 if __name__ == "__main__":
   app.debug = True

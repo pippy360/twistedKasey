@@ -43,6 +43,7 @@ class StorableObject( object ):
 class SearchableObject( StorableObject ):
   #TODO: add file function, make sure it doesn't let two files with the same databaseId
   fileIdsKey = 'fileIds_'
+  tagsKey    = 'tags_'
   searchableObjectString = 'searchableObject'
 
   def __init__( self, databaseId, fileType = '', title = '', description = '',
@@ -73,14 +74,21 @@ class SearchableObject( StorableObject ):
 
     data = self.serialize()
     data.update( { self.fileIdsKey : fileIds } )
+    data.update( { self.tagsKey : self.tags } )
     databaseFunctions.storeObjectInfo( data, self.databaseId, self.getClassId() )
 
   def load( self ):
     self.files = []
 
-    keys = [ self.localPrimitivesKey, self.fileIdsKey ]
+    keys = [ self.localPrimitivesKey, self.fileIdsKey, self.tagsKey ]#TODO: make a keys array maybe
     serializedObj = databaseFunctions.getSerializedObject( self.databaseId, keys )
     self.deserialize( serializedObj[ self.localPrimitivesKey ] )
+
+    print 'loading tags'
+    print serializedObj
+    print serializedObj.get( self.tagsKey, [] )
+    tags = serializedObj.get( self.tagsKey, [] )
+    self.tags = tags
 
     #todo: clean up the fileIds == None
     #load the related files
@@ -99,6 +107,7 @@ class SearchableObject( StorableObject ):
     for f in self.files:
       result['files'].append( f.getFileInfo() )#fixme: hardcoded
 
+    result.update( { self.tagsKey: self.tags } )
     result.update( { self.searchableObjectString: self.serializePrimitives() } )
     return result
 
