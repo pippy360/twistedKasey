@@ -3,56 +3,50 @@ from flask import send_file
 import os.path
 import Image
 import math
-import ast
 from database   import databaseFunctions, databaseObjects
 
-thumbnailCacheFolder = '/static/cache/thumbs'#DIRTY QUICK FIX
-
-#FIXME: this whole thing is patched together with horrible code just to get it working
+thumbnailCacheFolder = './static/cache/'
 
 def handleThumbnailRequest( request ):
-  print request.args
-  height  = request.args['height']
-  width   = request.args['width']
-  imageId = request.args['imageId']
-  fileloc = genThumbnail( imageId, (int( width ), int( height) ) )
-  return send_file( fileloc, mimetype='image/png')
+  height  = int( request.args['height'] )
+  width   = int( request.args['width'] )
 
+  if request.args.get('imageId') != None:
+    imageId = request.args['imageId']
+    imageInfo = databaseFunctions.getFileInfo( imageId )
+    thumbPath = createThumbnail( '.'+imageInfo['fileLocation'], imageInfo['filename'], (width,height) )
+  else:
+    imageLocation = request.args['imageLocation']
+    imageFilename = request.args['imageFilename']
+    thumbPath = createThumbnail( imageLocation, imageFilename, (width,height) )
 
-#if maintainAspectRatio is true then 'size' is the max possible width/height of the thumbnail
-def genThumbnail( imageId, size, maintainAspectRatio=True ):
-  imageInfo = databaseFunctions.getFileInfo( imageId )
+  return send_file( thumbPath, mimetype='image/png')
 
-  result = {}
-  result = ast.literal_eval( imageInfo['fileMetadata'] )
-
-  width  = result['dimensions']['width']
-  height = result['dimensions']['height']
-
-  imageInfoSize = ( width , height )
+def createThumbnail( imageLocation, imageFilename, thumbSize, maintainAspectRatio=True ):
+  orginalImg = Image.open( imageLocation + imageFilename )
+  imageSize = orginalImg.size
 
   if maintainAspectRatio:
-    thumbSizeX, thumbSizeY = getThumbnailSize( imageInfoSize, size )
-  else:
-    thumbSize = size
+    thumbSize = calcThumbnailSize( imageSize, thumbSize )
 
-  thumbFilename = getThumbnailFilename( imageId, thumbSizeX, thumbSizeY )
-  if os.path.isfile( thumbnailCacheFolder + thumbFilename ):#check cache
-    return thumbnailCacheFolder + thumbFilename
+  thumbPath = thumbnailCacheFolder + genThumbFilename( imageFilename, thumbSize )
+  #check if thumbnail is in cache
+  if os.path.isfile( thumbPath ):
+    return thumbPath
 
-  loc = '.' + imageInfo['fileLocation'] + imageInfo['filename']
-  orginalImg = Image.open( loc )
-  im = orginalImg.resize((thumbSizeX, thumbSizeY), Image.ANTIALIAS)
-  im.save( '.' + thumbnailCacheFolder + thumbFilename + imageInfo['extension'] )
+  thumb = orginalImg.resize( thumbSize, Image.ANTIALIAS )
+  thumb.save( thumbPath )
 
-  return '.' + thumbnailCacheFolder + thumbFilename + imageInfo['extension']
+  return thumbPath
 
 
-def getThumbnailFilename( imageId, width, height ):
-  return "thumbnail_{0}_{1}_{2}".format( imageId, width, height )
+def genThumbFilename( imageFilename, thumbSize ):
+  #rip the extension
+  filename, fileExtension = os.path.splitext( imageFilename )
+  return "thumbnail_{0}_{1}_{2}{3}".format( filename, thumbSize[0], thumbSize[1], fileExtension )
 
 
-def getThumbnailSize( imageSize, thumbSize):
+def calcThumbnailSize( imageSize, thumbSize ):
   x, y = imageSize
 
   if x > thumbSize[0]:
@@ -64,30 +58,3 @@ def getThumbnailSize( imageSize, thumbSize):
     y = thumbSize[1]
 
   return x, y
-
-
-##TODO: COMMENT
-#def genThumbnailWithOriginalAspectRatio( imageId, maxWidth, maxHeight ):
-#  imageInfo = imageInfoDatabase.getImageInfo( imageId )
-#  if( imageInfo.width/imageInfo.height > maxWidth/maxHeight ):
-#    #maxWidth is the value that limits size
-#    thumbWidth  = maxWidth
-#    thumbHeight = math.floor( thumbWidth * imageInfo.height/imageInfo.width )
-#  else:
-#    #maxHeight is the value that limits size
-#    thumbHeight = maxHeight
-#    thumbWidth  = math.floor( thumbHeight * imageInfo.width/imageInfo.height )
-#
-#  #DEBUG:
-#  print "width:"
-#  print thumbWidth
-#  print "height:"
-#  print thumbHeight
-#
-#  #check what the width and height should be
-#  return genThumbnail( imageId, thumbWidth, thumbHeight )
-
-
-#make a get size function so that we can check the cache
-
-
