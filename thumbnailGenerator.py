@@ -14,13 +14,14 @@ def handleThumbnailRequest( request ):
   if request.args.get('imageId') != None:
     imageId = request.args['imageId']
     imageInfo = databaseFunctions.getFileInfo( imageId )
-    thumbPath = createThumbnail( '.'+imageInfo['fileLocation'], imageInfo['filename'], (width,height) )
+    thumbPath = createThumbnail( imageInfo['fileLocation'], imageInfo['filename'], (width,height) )
   else:
     imageLocation = request.args['imageLocation']
     imageFilename = request.args['imageFilename']
     thumbPath = createThumbnail( imageLocation, imageFilename, (width,height) )
 
   return send_file( thumbPath, mimetype='image/png')
+
 
 def createThumbnail( imageLocation, imageFilename, thumbSize, maintainAspectRatio=True ):
   orginalImg = Image.open( imageLocation + imageFilename )

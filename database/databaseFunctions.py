@@ -62,6 +62,9 @@ def getFileInfo( databaseId ):
 
 def addTags( databaseId, tagsList ):
   keywordDatabase.addTags( databaseId, tagsList )
+  searchable = getSearchableObject( databaseId )
+  searchable.tags = tagsList
+  searchable.save()
 
 def createNewFile( databaseId, fileInfo ):
   fileType = fileInfo['type']
@@ -91,7 +94,7 @@ def storeObjectInfo( dataOneDimensionalDict, databaseId, classId ):
   new.update({ databaseKeyFormat.format( databaseId, objectTypePrefix ): classId })
   objectInfoDatabase.setMutli( new )
 
-def getFileIdWithHash( hash ):
+def getFileIdByHash( hash ):
   return fileHashDatabase.getRelatedIds( hash )
 
 #stores a file in the database

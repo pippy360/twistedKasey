@@ -2,90 +2,91 @@ import time
 import random
 import base64
 import hashlib
+import shutil
 import os
 from database   import databaseFunctions, databaseObjects
 from processing import detect
 #TODO: clients way of uploading, removing, editing files and the files data
 
 filesLocation = './static/storage/'
+tempDir = './static/temp/'
 
 #FIXME: the current implementation allows tags to be added only after the file has finished uploading
 def hanldeUploadFormSubmit( request ):
-  working = []
-  for k, f in request.files.iteritems():
-    tags = request.form['tags'].split()
-    returnData = storeFile( f, tags=tags )
-    if tags:
-      databaseFunctions.addTags( returnData['databaseId'], tags )#FIXME: THIS IS SO FUCKING HACKY
-    working.append( returnData['fileLocation'] )
+  f = request.files['photo']
 
-  #tags should be a dict #!! so that multiple tags can be added to multiple images
-  #databaseFunctions.addTags(  )
+  tags = request.form.get('tags')
+  path = saveTempFile( f )
+  status = handleUploadedFile( path )
+  if tags:
+    tags = tags.split()
+    databaseFunctions.addTags( status, tags )#FIXME: THIS IS SO FUCKING HACKY
 
-  #databaseFunctions.updateData(  )
-  return working
+  return status
 
-#TODO: this should really be moved to the databaseFunctions, incase the layout of databases changes
-#TODO: clean up
-def storeFile( f, tags=[],originalFilename='' ):
+def saveTempFile( fileStorageObj ):
+  #todo: there is functions to turn a path + filename into a valid path
+  fileStorageObj.save( tempDir + fileStorageObj.filename )
+  return tempDir + fileStorageObj.filename
 
-  fileInfo = getFileInfo( f )
+#handles a file after it's finished uploading to the server
+def handleUploadedFile( path ):
 
-  #FIXME: the paths here are badly done
-  filePath = './static/storage/'
-  sitePath = '/static/storage/'
-  fileInfo['fileLocation'] = sitePath
+  fileInfo = getFileInfo( path )
+  fileInfo['fileLocation'] = filesLocation#TODO: this is 
 
-  status = isValidFile( fileInfo )
-  if status != 0:
+  #TODO: replace status with exceptions and all that good stuff
+  status = isValidFile( path, fileInfo )
+  if not status:#FIXME: status should be some sort of obj
+    print 'ERROR'
     return status
 
+  return storeFile( path, fileInfo )
+
+#this function only accepts valid working files
+def storeFile( path, fileInfo ):
   #check if the file already exists
-  existingFileIdDict = databaseFunctions.getFileIdWithHash( fileInfo['hash'] )
-  print 'Hash:'
-  print fileInfo['hash']
+  if databaseFunctions.getFileIdByHash( fileInfo['hash'] ) != None:
+    return handleExistingFile( fileInfo )
 
-  if existingFileIdDict != None:
-    #todo: if it does exist check to make sure if it's a valid file (the hash database could be outdated/broken/drunk)
-    print 'existing file'
-    #call special update function
-    existingFileInfo = databaseFunctions.getFileInfo( existingFileIdDict['fileId'] )
-    return {
-      'databaseId': existingFileIdDict['searchableId'],
-      'fileLocation': existingFileInfo['filename']
-    }
-  else:
-    #FIXME: ALL THIS IS SO FUCKING MESSY
-    print 'new File'
-    #TODO: write the return information and decide on a standard way of doing it
-    fileIds = databaseFunctions.addFileToDatabase( fileInfo, tags=tags )
-    f.seek( 0 )
-    f.save( filePath + fileInfo['filename'] )
-    return {
-      'databaseId': fileIds['databaseId'],
-      'fileLocation': fileIds['fileLocation']
-    }
+  if fileInfo['type'] == 'image' and getVisuallyIdenticalFile( fileInfo['visualFingerprint'] ) != None:
+    return handleVisualMatch( fileInfo )#todo: can this just be the handleExistingFile function ?
 
+  returnData = databaseFunctions.addFileToDatabase( fileInfo )
+#  if not status.valid:
+ #   return status
 
-def getFileInfo( f ):
-  #FIXME:
-  tempPath = './static/storage/'
-  f.save( tempPath+f.filename )
-  result = detect.detect( tempPath+f.filename )
+  #move the file to storage
+  shutil.copyfile( path, filesLocation + fileInfo['filename'] )
 
-  result['size'] = 100000
+  return returnData['databaseId']
 
+def handleExistingFile( fileInfo ):
+  databaseFunctions.getFileIdByHash( fileInfo['hash'] )
+
+def getVisuallyIdenticalFile( fingerPrint ):
+  return None
+
+def getFileInfo( path ):
+  result = detect.detect( path )
+
+  result['size'] = os.path.getsize(path)
+  f = open( path )
   result['hash'] = getBeautifulHash( f )
-
   #get extension, just get it from the filename ATM
-  fileName, fileExtension = os.path.splitext( f.filename )
+  fileName, fileExtension = os.path.splitext( path )
   result['extension'] = fileExtension
 
   result['filename'] = result['hash'] + result['extension']
 
+  result['visualFingerprint'] = 'something'
   #then just the file type specific stuff
   #put type specific stuff into functions
   return result
+
+#TODO: USE THIS
+def getBasicFileInfo():
+  pass
 
 def getBeautifulHash( f ):
   tempHash = get_hash( f )
@@ -95,9 +96,9 @@ def get_hash(f):
   f.seek(0)
   return hashlib.md5(f.read()).digest()
 
-def isValidFile( fileInfo ):
+def isValidFile( path, fileInfo ):
   #FIXME:
-  if fileInfo['size'] > 1000:
+  if fileInfo['size'] > 100000000:
     return False
   elif not fileInfo['type'] in ['image']:
     return False

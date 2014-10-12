@@ -19,9 +19,9 @@
 .pictureDisplayAreaWrapper{
 	float: left;
 	width: 1000px;
-	height: 1200px;
 	background-color: white;
 	padding: 10px;
+
 }
 .selection{
 	position: absolute;
@@ -31,12 +31,14 @@
 	border-color: #8b9;
 }
 .imageDisplayWrapper{
-	background-color: green;
+	text-align: center;
 	color: white;
 	float: left;
-	height: 100px;
-	width: 100px;
+	height: 150px;
+	width: 150px;
 	margin: 5px;
+	border: 4px solid white;
+	border-radius: 4px;
 }
 .filterInputAreaWrapper{
 	margin: 10px;
@@ -51,13 +53,13 @@
 .imageDisplayWrapper.active{
 }
 .imageDisplayWrapper.toBeSelected{
-	background-color: blue !important;
+	border: 4px solid blue;
 }
 .imageDisplayWrapper.toBeDeselected{
-	background-color: green !important;
+	border: 4px solid white;
 }
 .imageDisplayWrapper.selected{
-	background-color: blue;
+	border: 4px solid blue;
 }
 .leftPanel{
 	margin-top: 10px;
@@ -111,6 +113,9 @@ jQuery(function($){
    	$.drop({ multi: true });
 });
 
+var dir = './databaseBuilder/images/';
+var height = 143;
+var width = 142;
 
 var state = {
 	allTags: {},
@@ -141,7 +146,7 @@ function displayVisableImages(){
 	$(".pictureDisplayArea").html('');
 	for( var i = 0; i < state.visableImages.length; i++ ){
 		$(".pictureDisplayArea").append("<div class='imageDisplayWrapper' data-id='"+ state.visableImages[i] +"'>	\
-			"+ state.visableImages[i] +"\
+			<img src='"+ getThumbnailUrl( state.visableImages[i] ) +"'/>\
 			<span class='tags'>\
 			</span>\
 		</div>")
@@ -297,6 +302,11 @@ function applyPageHooks(){
 	})
 }
 
+function getThumbnailUrl( filename ){
+	return "thumb?height="+ height +"&width="+ width +"\
+	&imageLocation="+ dir +"&imageFilename="+ filename;
+}
+
 $( document ).ready(function() {
 	loadAllImages();
 	displayVisableImages();
@@ -330,7 +340,7 @@ $( document ).ready(function() {
 			<div class="filterInputAreaWrapper">
 				<div>Select by tag: <input value="" /></div>
 			</div>
-			<div class="pictureDisplayArea">
+			<div class="pictureDisplayArea clearfix">
 
 			</div>
 		</div>
