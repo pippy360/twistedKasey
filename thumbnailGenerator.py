@@ -16,17 +16,23 @@ def handleThumbnailRequest( request ):
   fileId = request.args.get('fileId')
   if fileId != None:    
     fileInfo = databaseFunctions.getFileInfo( fileId )
-    #TODO: check the fileType and handle it if it's a video
-    thumbPath = createThumbnail( fileInfo['fileLocation'], fileInfo['filename'], (thumbWidth,height) )
+    print 'fileInfo'
+    print fileInfo
+    if fileInfo['fileType'] == databaseObjects.FileTypes.image:
+      thumbPath = createImageThumbnail( fileInfo['fileLocation'], fileInfo['filename'], (thumbWidth,height) )
+    elif fileInfo['fileType'] == databaseObjects.FileTypes.video:
+      thumbPath = createVideoThumbnail( fileInfo['fileLocation'], fileInfo['filename'], (thumbWidth,height) )
+    else:
+      print 'ERROR: BAD FILETYPE : ' + fileInfo['fileType'] 
   else:
     imageLocation = request.args['imageLocation']
     imageFilename = request.args['imageFilename']
-    thumbPath = createThumbnail( imageLocation, imageFilename, (thumbWidth,height) )
+    thumbPath = createImageThumbnail( imageLocation, imageFilename, (thumbWidth,height) )
 
   return send_file( thumbPath, mimetype='image/png')
 
 
-def createThumbnail( imageLocation, imageFilename, thumbSize, maintainAspectRatio=True ):
+def createImageThumbnail( imageLocation, imageFilename, thumbSize, maintainAspectRatio=True ):
   orginalImg = Image.open( imageLocation + imageFilename )
   imageSize = orginalImg.size
 

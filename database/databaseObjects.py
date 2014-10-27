@@ -9,6 +9,23 @@ acceptedFileTypes = ['image','video','sound']#TODO: MOVE THIS TO A CONFIG
 databaseIdPrefix = '_databaseId'
 dataPrefix = '_data_'
 
+#TODO: there's probably a better way of doing this
+#TODO: add an array so you can do if type in FileTypes.array
+class FileTypes( object ):
+
+  image = 'image';
+  video = 'video';
+  audio = 'audio';
+
+  @classmethod
+  def getTypeFromClassId( cls, classId ):
+    if(   ImageFile.getClassId() == classId ):
+      return cls.image
+    elif( VideoFile.getClassId() == classId ):
+      return cls.video
+    elif( AudioFile.getClassId() == classId ):
+      return cls.audio
+
 #TODO: explain
 class StorableObject( object ):
 
@@ -150,7 +167,7 @@ class BasicFile( StorableObject ):
     'extension':    '',
     'mimetype':     '',
     'fileMetadata': '',
-    'type':         ''
+    'fileType':     ''
   }
 
   #TODO: something about the init
@@ -174,7 +191,7 @@ class BasicFile( StorableObject ):
     self.serializablePrimitives['extension']    = fileData.get( 'extension' )
     self.serializablePrimitives['mimetype']     = fileData.get( 'mimetype' )
     self.serializablePrimitives['fileMetadata'] = fileData.get( 'metadata' )
-    self.serializablePrimitives['type']         = self.getType()
+    self.serializablePrimitives['fileType']     = self.getType()
 
   def getFileInfo( self ):
     return self.serializePrimitives()
@@ -183,7 +200,7 @@ class BasicFile( StorableObject ):
     return { self.localPrimitivesKey: self.serializePrimitives() }
 
   def getType( self ):
-    return self.getClassId()#FIXME: have some global nice way, use some sort of global enum
+    return FileTypes.getTypeFromClassId( self.getClassId() )#FIXME: have some global nice way, use some sort of global enum
 
 class ImageFile( BasicFile ):
   pass
@@ -193,5 +210,5 @@ class VideoFile( BasicFile ):
   pass
 
 
-class SoundFile( BasicFile ):
+class AudioFile( BasicFile ):
   pass

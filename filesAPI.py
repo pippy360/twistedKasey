@@ -38,7 +38,7 @@ def handleUploadedFile( path ):
   #TODO: replace status with exceptions and all that good stuff
   status = isValidFile( path, fileInfo )
   if not status:#FIXME: status should be some sort of obj
-    print 'ERROR'
+    print 'ERROR: handleUploadedFile'
     return status
 
   return storeFile( path, fileInfo )
@@ -49,7 +49,8 @@ def storeFile( path, fileInfo ):
   if databaseFunctions.getFileIdByHash( fileInfo['hash'] ) != None:
     return handleExistingFile( fileInfo )
 
-  if fileInfo['type'] == 'image' and getVisuallyIdenticalFile( fileInfo['visualFingerprint'] ) != None:
+  if (fileInfo['type'] == databaseObjects.FileTypes.image 
+      and getVisuallyIdenticalFile( fileInfo['visualFingerprint'] ) != None):
     return handleVisualMatch( fileInfo )#todo: can this just be the handleExistingFile function ?
 
   returnData = databaseFunctions.addFileToDatabase( fileInfo )
@@ -104,7 +105,7 @@ def isValidFile( path, fileInfo ):
   #FIXME:
   if fileInfo['size'] > 100000000:
     return False
-  elif not fileInfo['type'] in ['image']:
+  elif not fileInfo['type'] in ['image','video']:#FIXME: hardcoded
     return False
   else:
     return True

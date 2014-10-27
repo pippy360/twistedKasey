@@ -14,40 +14,35 @@ def getNewDatabaseId():
   return websiteInfoDatabase.getNewDatabaseId()
 
 #TODO: explain difference between this and getObjectType
-#FIXME: shouldn't be hardcoded
 def getFileType( databaseId ):
   #todo: what should this do if it get's none ????
   #todo: return error saying bad id
   objType = getObjectType( databaseId )
 
   if objType   == databaseObjects.ImageFile.getClassId():
-    return 'image'
+    return databaseObjects.FileTypes.image
   elif objType == databaseObjects.VideoFile.getClassId():
-    return 'video'
-  elif objType == databaseObjects.SoundFile.getClassId():
-    return 'sound'
+    return databaseObjects.FileTypes.video
+  elif objType == databaseObjects.AudioFile.getClassId():
+    return databaseObjects.FileTypes.audio
   else:
-    print "ERROR: create new file, bad objType given"
-    print objType
+    return None
 
+#Object Type is not the same as fileType
 def getObjectType( databaseId ):
   data = objectInfoDatabase.getVal( databaseKeyFormat.format( databaseId, objectTypePrefix ) )
   return data
-
 
 #check if file exists
 #FIXME: this is all really messy
 def isFile( databaseId ):
   #FIXME: clean up#THIS DOESN'T EVEN FUCKING CHECK IF IT'S A FILE !!!! GODDAM!
-  if getFileType( databaseId ) == None:
-      return False
-  else:
-    return True
+  return getFileType( databaseId ) != None
 
 def getFile( databaseId ):
   if not isFile( databaseId ):
-    print "it's not a file"
-    return 0, "ERROR: databaseId does not point to a file"#todo: lets try use this format for errors
+    print "ERROR: databaseId does not point to a file"#todo: lets try use this format for errors
+    return None
 
   newFile = createNewFile( databaseId, { 'type': getFileType( databaseId ) } )
   newFile.load()
@@ -68,12 +63,12 @@ def addTags( databaseId, tagsList ):
 
 def createNewFile( databaseId, fileInfo ):
   fileType = fileInfo['type']
-  if   fileType == 'image':
+  if   fileType == databaseObjects.FileTypes.image:
     return databaseObjects.ImageFile( databaseId, fileInfo )
-  elif fileType == 'video':
+  elif fileType == databaseObjects.FileTypes.video:
     return databaseObjects.VideoFile( databaseId, fileInfo )
-  elif fileType == 'sound':
-    return databaseObjects.SoundFile( databaseId, fileInfo)
+  elif fileType == databaseObjects.FileTypes.audio:
+    return databaseObjects.AudioFile( databaseId, fileInfo)
   else:
     print "ERROR: create new file, bad objType given"
 
@@ -108,8 +103,8 @@ def addFileToDatabase( fileInfo, fileDatabaseId=None, searchableInfo={}, tags=[]
                                        metadata=str( fileInfo['metadata'] ), tags=tags )
   s.addNewFile( fileInfo, fileDatabaseId )
   s.save()
-  fileHashDatabase.set( fileInfo['hash'], searchableDatabaseId, fileDatabaseId )#todo: make sure everything else worked before adding to the hashDB
-
+  #todo: make sure everything else worked before adding to the hashDB
+  fileHashDatabase.set( fileInfo['hash'], searchableDatabaseId, fileDatabaseId )
   
   return {
       'databaseId': searchableDatabaseId,

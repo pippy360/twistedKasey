@@ -61,7 +61,7 @@ $( document ).ready( function (){
     for( var i = 0; i < results.length; i++ ){
         var id = results[i].files[0].databaseId
         var tags = results[i].tags_
-        var loc = "http://localhost:5000/thumb?imageId="+ id +"&width="+ width +"&height=" + height
+        var loc = "http://localhost:5000/thumb?fileId="+ id +"&width="+ width +"&height=" + height
         $('.pageContents').append( getImagePreviewHtml( loc, results[i].files[0].filename, tags ) );
     }
 })

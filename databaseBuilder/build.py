@@ -1,7 +1,7 @@
 import os
 import threading
 import subprocess
-from thumbnailGenerator import createThumbnail
+from thumbnailGenerator import createImageThumbnail
 
 builderPath = './databaseBuilder/images/'
 
