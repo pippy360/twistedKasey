@@ -1,3 +1,4 @@
+#FIXME: THE TEMP FILES AREN'T BEING REMOVED
 import time
 import random
 import base64
@@ -6,7 +7,6 @@ import shutil
 import os
 from database   import databaseFunctions, databaseObjects
 from processing import detect
-#TODO: clients way of uploading, removing, editing files and the files data
 
 filesLocation = './static/storage/'
 tempDir = './static/temp/'
@@ -62,9 +62,10 @@ def storeFile( path, fileInfo ):
   return returnData['databaseId']
 
 def handleExistingFile( fileInfo ):
-  databaseFunctions.getFileIdByHash( fileInfo['hash'] )
+  return databaseFunctions.getFileIdByHash( fileInfo['hash'] )
 
-def getVisuallyIdenticalFile( fingerPrint ):
+def getVisuallyIdenticalFile( fingerprint ):
+  #compare the fingerprint with the stored ones and find an exact match
   return None
 
 def getFileInfo( path ):
@@ -79,10 +80,13 @@ def getFileInfo( path ):
 
   result['filename'] = result['hash'] + result['extension']
 
-  result['visualFingerprint'] = 'something'
+  result['visualFingerprint'] = calcVisualFingerprint( f )
   #then just the file type specific stuff
   #put type specific stuff into functions
   return result
+
+def calcVisualFingerprint( f ):
+  pass
 
 #TODO: USE THIS
 def getBasicFileInfo():

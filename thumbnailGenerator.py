@@ -1,4 +1,6 @@
 
+#fixme: ATM it uses fileId rather than the searchableId, fix that
+
 from flask import send_file
 import os.path
 import Image
@@ -9,16 +11,17 @@ thumbnailCacheFolder = './static/cache/'
 
 def handleThumbnailRequest( request ):
   height  = int( request.args['height'] )
-  width   = int( request.args['width'] )
+  thumbWidth   = int( request.args['width'] )
 
-  if request.args.get('imageId') != None:
-    imageId = request.args['imageId']
-    imageInfo = databaseFunctions.getFileInfo( imageId )
-    thumbPath = createThumbnail( imageInfo['fileLocation'], imageInfo['filename'], (width,height) )
+  fileId = request.args.get('fileId')
+  if fileId != None:    
+    fileInfo = databaseFunctions.getFileInfo( fileId )
+    #TODO: check the fileType and handle it if it's a video
+    thumbPath = createThumbnail( fileInfo['fileLocation'], fileInfo['filename'], (thumbWidth,height) )
   else:
     imageLocation = request.args['imageLocation']
     imageFilename = request.args['imageFilename']
-    thumbPath = createThumbnail( imageLocation, imageFilename, (width,height) )
+    thumbPath = createThumbnail( imageLocation, imageFilename, (thumbWidth,height) )
 
   return send_file( thumbPath, mimetype='image/png')
 

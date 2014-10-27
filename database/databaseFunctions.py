@@ -110,6 +110,7 @@ def addFileToDatabase( fileInfo, fileDatabaseId=None, searchableInfo={}, tags=[]
   s.save()
   fileHashDatabase.set( fileInfo['hash'], searchableDatabaseId, fileDatabaseId )#todo: make sure everything else worked before adding to the hashDB
 
+  
   return {
       'databaseId': searchableDatabaseId,
       'fileLocation': fileDatabaseId

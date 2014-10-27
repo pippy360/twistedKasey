@@ -1,5 +1,7 @@
 #TODO: be able to save user UPLOAD DATA(ip addr and stuff)
 #TODO: change SearchableObject name
+
+#FIXME: the whole type/imageFile class thing is totally messed up, fix it
 import objectInfoDatabase
 import databaseFunctions
 
@@ -11,6 +13,7 @@ dataPrefix = '_data_'
 class StorableObject( object ):
 
   localPrimitivesKey = 'info'
+  serializablePrimitives = {}
 
   @classmethod
   def getClassId( cls ):
@@ -20,13 +23,18 @@ class StorableObject( object ):
     if databaseId == None:
       databaseId = databaseFunctions.getNewDatabaseId()
 
+  #get a dict of the local primitive vars
+  #(i.e. the variables that can be grouped and stored in a redis hash)
+  def serializePrimitives( self ):
+    return self.serializablePrimitives  
+
   def save( self ):
     data = self.serialize()
-    databaseFunctions.storeObjectInfo( data, self.databaseId, self.getClassId() )#FIXME:
+    databaseFunctions.storeObjectInfo( data, self.serializablePrimitives['databaseId'], self.getClassId() )#FIXME:
 
   def load( self ):
     keys = [ self.localPrimitivesKey ]
-    serializedObj = databaseFunctions.getSerializedObject( self.databaseId, keys )
+    serializedObj = databaseFunctions.getSerializedObject( self.serializablePrimitives['databaseId'], keys )
     self.deserialize( serializedObj[ self.localPrimitivesKey ] )
 
   def serialize( self ):
@@ -35,7 +43,7 @@ class StorableObject( object ):
   def deserialize( self, serializedObj ):
     for key, val in serializedObj.iteritems():
       if isinstance( val, (int, long, float, complex, basestring, list) ):
-        setattr( self, key, val )
+        self.serializablePrimitives[key] = val
       else:
         print "ERROR: bad var type"#TODO: learn errors
 
@@ -45,22 +53,33 @@ class SearchableObject( StorableObject ):
   fileIdsKey = 'fileIds_'
   tagsKey    = 'tags_'
   searchableObjectString = 'searchableObject'
+  serializablePrimitives = {
+    'fileType':       '',
+    'title':          '',
+    'description':    '',
+    'metadata':       '',
+    'relatedFileIds': '',
+    'uploadInfo':     ''
+  }
 
+  #TODO
   def __init__( self, databaseId, fileType = '', title = '', description = '',
                metadata = '', relatedFileIds = '', uploadInfo = '', tags=[] ):
     self.files = []
-    self.tags           = tags
-    self.databaseId     = databaseId
-    self.fileType       = fileType
-    self.title          = title
-    self.description    = description
-    self.metadata       = metadata
-    self.relatedFileIds = relatedFileIds
-    self.uploadInfo     = uploadInfo
+
+    self.tags                   = tags
+    self.serializablePrimitives = {} #FIXME: see basicFile for details
+    self.serializablePrimitives['databaseId']     = databaseId
+    self.serializablePrimitives['fileType']       = fileType
+    self.serializablePrimitives['title']          = title
+    self.serializablePrimitives['description']    = description
+    self.serializablePrimitives['metadata']       = metadata
+    self.serializablePrimitives['relatedFileIds'] = relatedFileIds
+    self.serializablePrimitives['uploadInfo']     = uploadInfo
 
   def addNewFile( self, fileInfo,databaseId=None ):
     for f in self.files:
-      if f.databaseId == databaseId:
+      if f.serializablePrimitives['databaseId'] == databaseId:
         print "ERROR: file with id exists"
         return
 
@@ -70,23 +89,20 @@ class SearchableObject( StorableObject ):
     fileIds = []
     for f in self.files:
       f.save()
-      fileIds.append( f.databaseId )
+      fileIds.append( f.serializablePrimitives['databaseId'] )
 
     data = self.serialize()
     data.update( { self.fileIdsKey : fileIds } )
     data.update( { self.tagsKey : self.tags } )
-    databaseFunctions.storeObjectInfo( data, self.databaseId, self.getClassId() )
+    databaseFunctions.storeObjectInfo( data, self.serializablePrimitives['databaseId'], self.getClassId() )
 
   def load( self ):
     self.files = []
 
     keys = [ self.localPrimitivesKey, self.fileIdsKey, self.tagsKey ]#TODO: make a keys array maybe
-    serializedObj = databaseFunctions.getSerializedObject( self.databaseId, keys )
+    serializedObj = databaseFunctions.getSerializedObject( self.serializablePrimitives['databaseId'], keys )
     self.deserialize( serializedObj[ self.localPrimitivesKey ] )
 
-    print 'loading tags'
-    print serializedObj
-    print serializedObj.get( self.tagsKey, [] )
     tags = serializedObj.get( self.tagsKey, [] )
     self.tags = tags
 
@@ -111,18 +127,6 @@ class SearchableObject( StorableObject ):
     result.update( { self.searchableObjectString: self.serializePrimitives() } )
     return result
 
-  #serializes the local primitive vars
-  #(i.e. the variable that can be grouped and stored in a redis hash)
-  def serializePrimitives( self ):
-    return {
-          'fileType':       self.fileType,
-          'title':          self.title,
-          'description':    self.description,
-          'metadata':       self.metadata,
-          'relatedFileIds': self.relatedFileIds,
-          'uploadInfo':     self.uploadInfo
-      }
-
   def serialize( self ):
     return { self.localPrimitivesKey: self.serializePrimitives() }
 
@@ -131,40 +135,55 @@ class uploadInfo( StorableObject ):
   pass
 
 
+
+#instead of having a different class for each file type 
 class BasicFile( StorableObject ):
+
+  type = 'BasicFile'#FIXME: have some sort of global image type
+
+  serializablePrimitives =   {
+    'databaseId'  : '',
+    'originalFile': '',
+    'fileHash':     '',
+    'filename':     '',
+    'fileLocation': '',
+    'extension':    '',
+    'mimetype':     '',
+    'fileMetadata': '',
+    'type':         ''
+  }
 
   #TODO: something about the init
   def __init__( self, databaseId=None, fileData={}):
     if databaseId == None:
       databaseId = databaseFunctions.getNewDatabaseId()
 
-    self.databaseId   = databaseId
-    self.originalFile = fileData.get( 'originalFile' )
-    self.fileHash     = fileData.get( 'fileHash' )
-    self.filename     = fileData.get( 'filename' )
-    self.fileLocation = fileData.get( 'fileLocation' )
-    self.extension    = fileData.get( 'extension' )
-    self.mimetype     = fileData.get( 'mimetype' )
-    self.fileMetadata = fileData.get( 'metadata' )
+    #FIXME: there should be a way of allowing optional parameters 
+    #but while still enforcing the user to fill the required ones
+    #MAYBE just use the init to decide which ones are optional and not
+    #BUT you should be able to add a new primitive with one line of code
+
+    #FIXME: instead of this we should deep copy the class.serializablePrimitives and use that
+    #to force the user to set certain vars
+    self.serializablePrimitives = {} #FIXME: 
+    self.serializablePrimitives['databaseId']   = databaseId
+    self.serializablePrimitives['originalFile'] = fileData.get( 'originalFile' )
+    self.serializablePrimitives['fileHash']     = fileData.get( 'fileHash' )
+    self.serializablePrimitives['filename']     = fileData.get( 'filename' )
+    self.serializablePrimitives['fileLocation'] = fileData.get( 'fileLocation' )
+    self.serializablePrimitives['extension']    = fileData.get( 'extension' )
+    self.serializablePrimitives['mimetype']     = fileData.get( 'mimetype' )
+    self.serializablePrimitives['fileMetadata'] = fileData.get( 'metadata' )
+    self.serializablePrimitives['type']         = self.getType()
 
   def getFileInfo( self ):
     return self.serializePrimitives()
 
-  def serializePrimitives( self ):
-    return {
-      'databaseId'  : self.databaseId,
-      'originalFile': self.originalFile,
-      'fileHash':     self.fileHash,
-      'filename':     self.filename,
-      'fileLocation': self.fileLocation,
-      'extension':    self.extension,
-      'mimetype':     self.mimetype,
-      'fileMetadata': self.fileMetadata
-    }
-
   def serialize( self ):
     return { self.localPrimitivesKey: self.serializePrimitives() }
 
+  def getType( self ):
+    return self.getClassId()#FIXME: have some global nice way, use some sort of global enum
 
 class ImageFile( BasicFile ):
   pass
