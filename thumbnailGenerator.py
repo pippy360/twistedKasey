@@ -1,6 +1,8 @@
 
 #fixme: ATM it uses fileId rather than the searchableId, fix that
 
+#TODO: create a function called getthumbnail that checks cache if not there then createsthumbnail
+
 from flask import send_file
 import os.path
 import Image
@@ -68,3 +70,9 @@ def calcThumbnailSize( imageSize, thumbSize ):
     y = thumbSize[1]
 
   return x, y
+
+def createVideoThumbnail( videoLocation, videoFilename, thumbSize, maintainAspectRatio=True ):
+  #you need to know the video dimensions if we want to maintainAspectRatio
+  return None
+
+

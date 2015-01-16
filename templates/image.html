@@ -1,0 +1,31 @@
+{% extends "baseLayout.html" %}
+
+{% block css %}
+
+<link href="/static/css/common.css" rel="stylesheet">
+<style type="text/css">
+.pageContents{
+	text-align: center;
+}
+.pageContents p{
+	margin-right: 20%;
+	margin-left: 20%;
+}
+</style>
+{% endblock %}
+
+{% block js %}
+
+{% endblock %}
+
+
+{% block body %}
+<div class="pageContentsWrapper">
+    <div class="pageContents">
+		<img src="/static/storage/{{ imageId|safe }}">
+    	<h1>Image Title</h1>
+    	<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+    </div>
+</div>
+
+{% endblock %}

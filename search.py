@@ -6,8 +6,10 @@ def getSearchResultsWithQuery( query ):
   keywordsList = getKeywordsFromQuery( query )
   sortedImageIdList = databaseFunctions.getIntersection( keywordsList )
 
+  print 'sortedImageIdList'
+  print 
+
   result = []
-  print sortedImageIdList
   for imageId in sortedImageIdList:
     objData = databaseFunctions.getObjectInfo( imageId )
     result.append( objData )

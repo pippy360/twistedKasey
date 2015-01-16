@@ -11,7 +11,7 @@ app = Flask(__name__)
 @app.route("/")
 @app.route("/home")
 @app.route("/home/")
-@app.route("/index.html")
+@app.route("/home.html")
 def showIndex():
   return render_template("home.html")
 
@@ -52,6 +52,14 @@ def handleThumbnailRequest():
 def showBuildPage():
   imageFilenamesListString = build.handlePageLoad( request )
   return render_template("build.html", imageFilenamesListString=imageFilenamesListString)
+
+@app.route("/video", methods=['GET'])
+def showVideoPage():
+  return render_template("video.html", videoId=request.args['id'])
+
+@app.route("/image", methods=['GET'])
+def showImagePage():
+  return render_template("image.html", imageId=request.args['id'])
 
 if __name__ == "__main__":
   app.debug = True

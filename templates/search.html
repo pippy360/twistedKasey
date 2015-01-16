@@ -62,12 +62,13 @@ $( document ).ready( function (){
         var id = results[i].files[0].databaseId
         var tags = results[i].tags_
         var loc = "http://localhost:5000/thumb?fileId="+ id +"&width="+ width +"&height=" + height
-        $('.pageContents').append( getImagePreviewHtml( loc, results[i].files[0].filename, tags ) );
+        $('.pageContents').append( getImagePreviewHtml( loc, results[i].files[0].filename, 
+            tags, results[i].searchableObject.fileType ) );
     }
 })
 
 //TODO:
-function getImagePreviewHtml( location, filename, tags ){
+function getImagePreviewHtml( location, filename, tags, type ){
 
     var tagsString = ''
     for(var j = 0; j < tags.length; j++){
@@ -80,10 +81,18 @@ function getImagePreviewHtml( location, filename, tags ){
     outputHtml  = "<div class='imgFixWidthCont'>";
     outputHtml += "    <div class='imgWrap'>";
     outputHtml += "        <div class='closeWrap'>";
-    outputHtml += "            <img class='imgFixWidth' src='" + location + "' />";
+    if (type == 'image') {
+        outputHtml += "            <a href='/image?id="+ filename +"' ><img class='imgFixWidth' src='" + location + "' /></a>";
+    }else{
+        outputHtml += "            <a href='/video?id="+ filename +"' ><img class='imgFixWidth' src='" + location + "' /></a>";
+    }
     outputHtml += "        </div>";
     outputHtml += "    </div>";
-    outputHtml += "    <div class='info'><a href='#'>"+ filename +"</a><br><span class='tags'>"+ tagsString +"</span></div>";
+    if (type == 'image') {
+        outputHtml += "    <div class='info'><a href='/image?id="+ filename +"'>"+ filename +"</a><br><span class='tags'>"+ tagsString +"</span></div>";
+    }else{
+        outputHtml += "    <div class='info'><a href='/video?id="+ filename +"'>"+ filename +"</a><br><span class='tags'>"+ tagsString +"</span></div>";
+    }
     outputHtml += "</div>";
     return outputHtml
 }

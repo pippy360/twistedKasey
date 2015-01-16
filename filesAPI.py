@@ -8,57 +8,64 @@ import os
 from database   import databaseFunctions, databaseObjects
 from processing import detect
 
+MAX_FILE_SIZE = 1000000#TODO: GET THIS FROM 
+
+
+#the idea here is that we want to keep the temp files not publicly accessible
 filesLocation = './static/storage/'
 tempDir = './static/temp/'
-
-#FIXME: the current implementation allows tags to be added only after the file has finished uploading
 def hanldeUploadFormSubmit( request ):
-  f = request.files['photo']
-
-  tags = request.form.get('tags')
-  path = saveTempFile( f )
-  status = handleUploadedFile( path )
+  status = {
+    'isValid': False,
+    'reason': '',#human readable Error/Reason isValid is false
+    'databaseId': '',#file Id not to be decided until 
+    'fileInfo': {}
+  }
+  f       = request.files['photo']
+  status  = handleRecivedFile(f, tempDir, filesLocation, status)
+  tags    = request.form.get('tags')
+  status['databaseId'] = storeFileInDatabase(status['fileInfo'])
   if tags:
     tags = tags.split()
-    databaseFunctions.addTags( status, tags )#FIXME: THIS IS SO FUCKING HACKY
+    databaseFunctions.addTags( status['databaseId'], tags )#FIXME: shouldn't be using status like this
+  
+  return status
+
+#this takes in a flask fileStorageObj, moves it to a hidden (from public access) folder
+#then it checks if it's a valid file and if so it moves it to it's finalLocation
+#it it's invalid then it's deleted
+def handleRecivedFile( fileStorageObj, tempHiddenLocation, finalLocation, status ):
+  path = saveTempFile( fileStorageObj )
+  status['fileInfo'] = getFileInfo( path )
+  status['fileInfo']['fileLocation'] = finalLocation
+  
+  status = isValidFile( status['fileInfo'], status )
+  if status['isValid']:
+    shutil.move(path, os.path.join(finalLocation, status['fileInfo']['filename']) )
+  else:
+    os.remove(path)
 
   return status
 
 def saveTempFile( fileStorageObj ):
-  #todo: there is functions to turn a path + filename into a valid path
-  fileStorageObj.save( tempDir + fileStorageObj.filename )
-  return tempDir + fileStorageObj.filename
-
-#handles a file after it's finished uploading to the server
-def handleUploadedFile( path ):
-
-  fileInfo = getFileInfo( path )
-  fileInfo['fileLocation'] = filesLocation#TODO: this is 
-
-  #TODO: replace status with exceptions and all that good stuff
-  status = isValidFile( path, fileInfo )
-  if not status:#FIXME: status should be some sort of obj
-    print 'ERROR: handleUploadedFile'
-    return status
-
-  return storeFile( path, fileInfo )
+  fileHash = getBeautifulHash( fileStorageObj );
+  fileName, fileExtension = os.path.splitext( fileStorageObj.filename )
+  fileStorageObj.seek( 0 )#otherwise it writes a 0 byte file
+  path = os.path.join(tempDir, fileHash+fileExtension)
+  fileStorageObj.save( path )
+  return path
 
 #this function only accepts valid working files
-def storeFile( path, fileInfo ):
+def storeFileInDatabase( fileInfo ):
   #check if the file already exists
   if databaseFunctions.getFileIdByHash( fileInfo['hash'] ) != None:
-    return handleExistingFile( fileInfo )
+    return (handleExistingFile( fileInfo ))['searchableId']
 
   if (fileInfo['type'] == databaseObjects.FileTypes.image 
       and getVisuallyIdenticalFile( fileInfo['visualFingerprint'] ) != None):
     return handleVisualMatch( fileInfo )#todo: can this just be the handleExistingFile function ?
 
   returnData = databaseFunctions.addFileToDatabase( fileInfo )
-#  if not status.valid:
- #   return status
-
-  #move the file to storage
-  shutil.copyfile( path, filesLocation + fileInfo['filename'] )
 
   return returnData['databaseId']
 
@@ -74,6 +81,8 @@ def getFileInfo( path ):
 
   result['size'] = os.path.getsize(path)
   f = open( path )
+  f.seek(0)
+
   result['hash'] = getBeautifulHash( f )
   #get extension, just get it from the filename ATM
   fileName, fileExtension = os.path.splitext( path )
@@ -84,6 +93,8 @@ def getFileInfo( path ):
   result['visualFingerprint'] = calcVisualFingerprint( f )
   #then just the file type specific stuff
   #put type specific stuff into functions
+
+  f.close()
   return result
 
 def calcVisualFingerprint( f ):
@@ -101,14 +112,20 @@ def get_hash(f):
   f.seek(0)
   return hashlib.md5(f.read()).digest()
 
-def isValidFile( path, fileInfo ):
-  #FIXME:
-  if fileInfo['size'] > 100000000:
-    return False
-  elif not fileInfo['type'] in ['image','video']:#FIXME: hardcoded
-    return False
+def isValidFile( fileInfo, status ):
+  if fileInfo['size'] < 0:
+    status['isValid'] = False
+    status['reason']  ='File Size less than 0 ??? WTF ???'
+  elif fileInfo['size'] > MAX_FILE_SIZE:
+    status['isValid'] = False
+    status['reason']  = 'File too big!'
+  elif not fileInfo['type'] in ['image','video']:#FIXME: hardcoded, also gifs are video !
+    status['isValid'] = False
+    status['reason']  = 'File is not a valid image! file type detected ' + fileInfo['type']
   else:
-    return True
+    status['isValid'] = True
+  
+  return status
 
 def getNewFileId():
   #the number of the file uploaded,
